@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>業務視覺化儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Noto Sans TC', sans-serif; }
+
+        :root {
+            --color-todo-bg: #fee2e2; --color-todo-text: #991b1b; --color-todo-border: #ef4444;
+            --color-upcoming-bg: #ffedd5; --color-upcoming-text: #9a3412; --color-upcoming-border: #f97316;
+            --color-inprogress-bg: #e0f2fe; --color-inprogress-text: #075985; --color-inprogress-border: #0ea5e9;
+            --color-done-bg: #dcfce7; --color-done-text: #166534; --color-done-border: #22c55e;
+            --sidebar-active-bg: #f0f9ff; --sidebar-active-text: #0369a1;
+        }
+
+        .task-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            border-left: 5px solid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .sidebar-link.active {
+            background-color: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+            font-weight: 600;
+        }
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--sidebar-active-text);
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary .group-arrow { transform: rotate(180deg); }
+
+        #modal-container.hidden { display: none; }
+        .chimei-tab.active {
+            border-color: var(--color-inprogress-border);
+            color: var(--color-inprogress-text);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div class="flex flex-col md:flex-row md:h-screen">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-72 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+            <div class="p-5 border-b border-slate-200">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-sky-100 text-sky-600 p-2 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">業務彙整</h2>
+                        <p class="text-sm text-slate-500">單位導覽</p>
+                    </div>
+                </div>
+            </div>
+            <nav id="sidebar-nav" class="flex-1 p-4 space-y-1 custom-scrollbar md:overflow-y-auto">
+                <!-- Nav links will be injected here -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+            <div class="max-w-screen-2xl mx-auto">
+                <header class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 id="main-header" class="text-3xl md:text-4xl font-bold text-slate-800">業務進度總覽</h1>
+                        <p id="last-updated" class="text-slate-500 mt-2">資料更新時間</p>
+                    </div>
+                    <div class="relative">
+                        <select id="person-filter" class="appearance-none w-full sm:w-56 bg-white border border-slate-300 text-slate-700 py-2 pl-3 pr-10 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-sky-500">
+                            <!-- Person options will be injected here -->
+                        </select>
+                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </header>
+
+                <div id="summary-container" class="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6 mb-10">
+                    <!-- Summary cards will be injected here -->
+                </div>
+
+                <div id="kanban-container" class="space-y-12">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-container" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h2 id="modal-title" class="text-xl md:text-2xl font-bold text-slate-800"></h2>
+                <button id="modal-close" class="text-slate-400 hover:text-slate-700 transition-colors">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                <!-- Modal task list will be injected here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Status: 1=待辦, 2=近期規劃, 3=進行中, 4=已完成
+        const tasks = [
+            { mainGroup: '教學部業務', group: '教學部', task: '奇美月系列活動規劃：\n• 9/8(一)與策展公司進行第3次規劃討論\n• 9/10(三)與策展公司討論活動流程細節\n• 11/22(六)PGY說明會\n• 11/23(日)醫學教育研討會', person: '全體同仁', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: '奇美暖心角第二波醫療人文展於9/8(一)開展，展期至9/30。', person: '陳詩芸', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: '醫學院校教職：\n彙整高雄醫學大學114學年度第二學期兼任教師續聘作業，9/29(一)截止。', person: '許淑怡', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: 'ISO 7101內部稽核種子教育訓練：9/2、9/23、9/30。', person: '劉雯, 吳曉琪', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: '114年上半年網路教學平台滿意度調查。', person: '林淑雅', status: 3 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '進行112-113年度主治醫師論文發表結算追蹤作業。', person: '林汶秀', status: 3 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '「台南市醫師公會暨奇美醫院聯合迎新餐會」更改至12/12(五)18:00。', person: '高瑞穗', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/22(一) 實證醫學課程', person: '高瑞穗', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/16(二) 教學技巧課程', person: '林淑雅', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/19(五) 醫學人文課程', person: '林淑雅', status: 2 },
+            { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '統計114年度「新進住院醫師職前訓練課程」成果。', person: '林淑雅', status: 3 },
+            { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '彙整114年度住院醫師年度評比結果。', person: '林淑雅', status: 3 },
+            { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '住院醫師模擬考成績追蹤。', person: '林淑雅', status: 3 },
+            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', type: 'chart', id: 'pgy-chart', task: '115年二年期PGY訓練師資送審(待審核)。', person: '吳曉琪', status: 3, chartData: { labels: ['內科', '外科', '婦產科', '兒科', '急診'], datasets: [{ label: '主治醫師人數', data: [67, 42, 13, 15, 40], backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }, { label: '一般醫學師資', data: [47, 27, 12, 14, 32], backgroundColor: 'rgba(255, 159, 64, 0.6)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }], ratios: ['70%', '64%', '92%', '93%', '80%'] } },
+            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '115年二年期PGY訓練計畫新增安南醫院-婦產科訓練。', person: '吳曉琪', status: 3 },
+            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '9/19(五)16:00-17:00「社區醫學訓練說明會」。', person: '王嬿茹', status: 2 },
+            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '114/9/12已完成115年二年期PGY訓練師資送審。', person: '吳曉琪', status: 4 },
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '辦理「完訓教師成效追蹤座談會」:\n• 9/11(四) 柳營奇美醫院\n• 9/19(五) 佳里奇美醫院\n• 9/26(五) 總院奇美醫院', person: '王嬿茹', status: 3 },
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/22(五)「院級全人照護跨領域教學討論會議」。', person: '王嬿茹, 楊宜婷, 陳詩芸', status: 2 },
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/9前已完成「一般醫學師資培育及PGY OSCE教學影片競賽」送件。', person: '王嬿茹', status: 4 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: 'UGY學員病歷寫作指導課程 (9/09、9/10、9/17)。', person: '許淑怡, 侯昱瑾', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '9/22(一)中山醫大第二梯報到職前訓。', person: '許淑怡, 侯昱瑾', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '實習訪視及參訪時間：\n• 中山後醫實習訪視: 10/07(二)\n• 中山後醫實習參訪: 10/21(二)\n• 中山醫大實習訪視: 10/23(四)', person: '許淑怡, 侯昱瑾', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '更新TMAC評鑑日期：\n• 國立中山大學：12/10(三)\n• 中山醫學大學：12/17(三)', person: '許淑怡, 侯昱瑾', status: 3 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/17(三) 腹腔鏡模擬箱課程', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/25(四) 3D列印血管縫合課程', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '休克處置演練 (9/09、9/30)', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: 'TRM急救團隊演練 (9/16、9/23)', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '呼吸道擬真練習1.0 (9/11、9/18)', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '114年第二次OSCE外派考官：\n• 10/25(六) 嘉義長庚 (謝孟倉主任)\n• 10/26(日) 嘉義長庚 (葉敬淳醫師)', person: '盧英云', status: 2 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成OSCE考官及標準化病人資格展延認證。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「臨床技能評估測驗計畫」自評表。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「臨床技能測驗優良教案甄選」送件。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/8前已完成OSCE教案競賽投稿。', person: '盧英云', status: 4 },
+            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/16(四)「醫事職類全人照護跨領域教學討論會議」。', person: '楊宜婷, 陳詩芸', status: 2 },
+            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/17(五) 辦理「藝術融入醫學人文教育課程」。', person: '楊宜婷, 陳詩芸', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床醫事人員培訓計畫', task: '114年度臨培主計畫已於9/10(三)送審。', person: '楊宜婷, 許淑怡', status: 4 },
+            { mainGroup: '教學部業務', group: '台灣醫事聯合臨床技能發展學會', task: '9/20(六) 辦理「2025年會員大會暨學術研討會」。', person: '楊依玲', status: 2 },
+            { mainGroup: '教學部業務', group: '台灣醫事聯合臨床技能發展學會', task: '9/19(五)下午進行場佈。', person: '楊依玲', status: 2 },
+            { mainGroup: '教學部業務', group: '病歷審查小組', task: '完成114年第三季(7-9月)住院病歷行政審查。', person: '李迎真, 林盟淦', status: 3 },
+            { mainGroup: '教學部業務', group: '病歷審查小組', task: '10月起進行第四季住院病歷行政審查。', person: '李迎真, 林盟淦', status: 2 },
+            { mainGroup: '教學部業務', group: '圖書館', task: '李從政退休，周晉憶新進人員訓練。\n書刊借閱流通，市圖借書每周送書，每月新書編目入檔。\n年度西文期刊訂購問卷調查。\nJCR發佈2024年SCI.SSCI.ESCI.AHCI數據下載。\n每月最新消息、教育訓練：每月新進護理、每周新進護生、8/7 Medline & EMBASE & JBI@OVID、9/10 DynaMed。\n麻醉專科護理師訓練醫院評鑑資料提供。', person: '陳憶玲', status: 3 },
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'ISO 7101種子稽核員教育訓練課程 (9/23, 9/30)。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '委員會審閱與出版申請事務。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '影片授權1筆進行中。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9月份會議室月巡檢。', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '會議室相關事務 (狀況排除、公文、維護、借用)。', person: '葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9/21 假日會議輪值。', person: '許召玟', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'Nas儲存設備擴充評估 (待報價)。', person: '林雨蕎', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '主任交辦事項：Nano banana測試。', person: '林雨蕎', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9/11 已參與亞太永續博覽會頒獎典禮。', person: '許召玟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '已完成標準文件表單。', person: '許召玟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '151期奇美醫訊 (9/19截稿；9/22~10/01催稿、送審)。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '協助大聲公投稿審閱與上架事務。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '稿件處理：審閱中8件，委員審閱中8件。', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '頭條、榮譽榜、活動快遞製作與發佈。', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '首頁輪播製作上架。', person: '黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '已發佈花絮/散文12件、榮譽榜12件。', person: '李偲詩', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '節目錄製 (9/19x2, 9/24x3)。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '多個節目送審、校稿、剪輯中。', person: '林雨蕎, 李偲詩, 陳琬婷, 黃怡瑄, 陳慧娟, 葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '9/17「護理衛教室」EP21 (待進行)', person: '陳琬婷', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '9/26「第一線護理人物專訪」EP05 (待進行)', person: '陳慧娟', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '8/25「護理衛教室」EP18，已完成。', person: '黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: 'IHF會員宣傳影片、讀書會影片x2製作。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '醫院簡介影片更新、IHF影片校稿中。', person: '林雨蕎, 李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '9/12 鎮靜安眠課程影片，已完成。', person: '林雨蕎', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '一般醫學師資培育影片，已完成。', person: '黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '敘事醫學競賽影片，已完成。', person: '黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '各類海報、設計製作與校稿中。', person: '許召玟, 林雨蕎, 蕭麗香, 李偲詩, 陳琬婷, 陳慧娟, 葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '奇美大小事podcast於空橋走廊宣傳設計 (待進行)。', person: '陳慧娟', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '已完成海報4件。', person: '李偲詩, 陳琬婷', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '9/25 拍攝 (待申請)。', person: '許召玟', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '規劃拍攝行程 (9/12, 9/13, 9/21, 10/2)。', person: '黃怡瑄, 陳慧娟, 葉品妤', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '已完成多項拍攝活動。', person: '陳琬婷, 黃怡瑄, 陳慧娟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '體重管理手冊 (印刷中)。', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '醫院簡介 (中/英/簡) 更新中。', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '151期奇美醫訊資料收集整理。', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '佳里院區Joomla網頁新製。', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '多項網頁製作中 (佳里精神科、教學平台、總院就醫指南、器捐牆)。', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '全口植牙術後注意事項網頁 (待校稿)。', person: '黃怡瑄', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '已完成多項網頁製作與上架。', person: '蕭麗香, 陳琬婷, 黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '4份衛教單張 (校稿中)。', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '柳營住院須知手冊 (製作中)。', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '檢查室衛教單張更新日期x7 (校稿中)。', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '已完成2項衛教單張。', person: '李偲詩, 陳琬婷', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '呼吸治療科/復健部海報 (製作中)。', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '排版製作3筆，直接輸出4筆。', person: '黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '已完成2項醫學海報。', person: '陳慧娟, 陳琬婷', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '其他', task: '各項常規行政業務處理中。', person: '林雨蕎, 李偲詩, 陳慧娟, 黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '其他', task: '整合醫療中心18個壓克力名牌(已完成)', person: '陳慧娟', status: 4}
+        ];
+        
+        const chimeiMonthData = {
+            '總時程表': `
+                <div class="space-y-6">
+                    <!-- Timeline Item -->
+                    <div class="flex gap-x-4 relative">
+                        <div class="absolute left-6 top-12 -bottom-4 w-px bg-slate-200"></div>
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-sky-100 text-sky-700 flex flex-col items-center justify-center font-bold leading-tight"><span>11月</span><span class="text-xl">1</span></div>
+                        </div>
+                        <div class="w-full space-y-3">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">開幕記者會</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：吳園藝文中心</p>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item -->
+                    <div class="flex gap-x-4 relative">
+                         <div class="absolute left-6 top-12 -bottom-4 w-px bg-slate-200"></div>
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                           <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex flex-col items-center justify-center font-bold leading-tight"><span>11月</span><span class="text-xl">15</span></div>
+                        </div>
+                        <div class="w-full space-y-3">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">感染管制會議重症感染研討會</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 豐收廳</p>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item -->
+                    <div class="flex gap-x-4 relative">
+                         <div class="absolute left-6 top-12 -bottom-4 w-px bg-slate-200"></div>
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                           <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex flex-col items-center justify-center font-bold leading-tight"><span>11月</span><span class="text-xl">16</span></div>
+                        </div>
+                        <div class="w-full space-y-3">
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">巡禮記者會</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 布雷西亞廳</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">醫品&病安共識營</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 豐收廳</p>
+                            </div>
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">醫品&病安國際研討會</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 奇美廳</p>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item -->
+                    <div class="flex gap-x-4 relative">
+                         <div class="absolute left-6 top-12 -bottom-4 w-px bg-slate-200"></div>
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                           <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex flex-col items-center justify-center font-bold leading-tight"><span>11月</span><span class="text-xl">22</span></div>
+                        </div>
+                        <div class="w-full space-y-3">
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">醫學人文沙龍、AMEE心得分享、PGY回娘家、名人講座</p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 布雷西亞廳</p>
+                            </div>
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-sky-400 hover:shadow-md transition-all duration-200 cursor-pointer" onclick="openPgyModal()">
+                                <p class="font-bold text-sky-700 text-base">醫師PGY說明會 (上午/下午) <span class="text-xs font-normal text-sky-600 ml-2">點擊查看詳情 ▸</span></p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 豐收廳</p>
+                            </div>
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-violet-400 hover:shadow-md transition-all duration-200 cursor-pointer" onclick="openYyTalkModal()">
+                                <p class="font-bold text-violet-700 text-base">YY Talk-當代人物論壇 <span class="text-xs font-normal text-violet-600 ml-2">點擊查看詳情 ▸</span></p>
+                                <p class="text-sm text-slate-500 mt-1">地點：奇美博物館 奇美廳</p>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item -->
+                    <div class="flex gap-x-4 relative">
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                           <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex flex-col items-center justify-center font-bold leading-tight"><span>11月</span><span class="text-xl">23</span></div>
+                        </div>
+                        <div class="w-full space-y-3">
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">AI醫學教育分享交流 & 競賽得獎者分享</p>
+                                <p class="text-sm text-slate-500 mt-1">時間：上午<br>地點：奇美博物館 豐收廳</p>
+                            </div>
+                             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <p class="font-bold text-slate-800 text-base">教學共識營</p>
+                                <p class="text-sm text-slate-500 mt-1">時間：下午<br>地點：奇美博物館 豐收廳</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            '榮譽區': `
+                <p class="text-slate-500">此處將放置榮譽榜等相關資訊。</p>
+            `
+        };
+
+        let currentFilter = 'all';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+            renderPersonFilter();
+            renderKanbanBoard();
+            updateView('all');
+            setupEventListeners();
+            updateTimestamp();
+            document.querySelector('#sidebar-nav a[data-filter="all"]').classList.add('active');
+        });
+        
+        function updateTimestamp() {
+            const now = new Date();
+            const formattedDate = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+            document.getElementById('last-updated').textContent = `資料更新時間：${formattedDate}`;
+        }
+
+        function getStatusInfo(statusId) {
+            switch (statusId) {
+                case 1: return { name: '待辦事項', icon: 'M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z' };
+                case 2: return { name: '近期規劃', icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18' };
+                case 3: return { name: '進行中', icon: 'M16.023 9.348h4.992v-.001a.75.75 0 01.75.75v3.676a.75.75 0 01-.75.75h-4.992v1.01a.75.75 0 01-1.5 0v-1.01H9.024v1.01a.75.75 0 01-1.5 0v-1.01H2.525v.001a.75.75 0 01-.75-.75V10.1a.75.75 0 01.75-.75h4.992V6.05a.75.75 0 011.5 0v3.298h4.991v-3.298a.75.75 0 011.5 0v3.298z' };
+                case 4: return { name: '已完成', icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
+                default: return { name: '未知' };
+            }
+        }
+        
+       function renderSidebar() {
+            const navContainer = document.getElementById('sidebar-nav');
+            let navHtml = `<a href="#" data-filter="all" class="sidebar-link relative transition-colors duration-200 block py-2.5 px-4 rounded-md hover:bg-slate-100 text-slate-700 font-semibold">顯示總覽</a>`;
+            
+            const mainGroups = [...new Set(tasks.map(t => t.mainGroup))];
+            
+            mainGroups.forEach(mainGroup => {
+                const subGroups = [...new Set(tasks.filter(t => t.mainGroup === mainGroup).map(t => t.group))];
+                if (subGroups.length > 0) {
+                        navHtml += `
+                            <details open class="sidebar-group">
+                                <summary class="sidebar-link relative list-none cursor-pointer transition-colors duration-200 block py-2.5 px-4 rounded-md hover:bg-slate-100 text-slate-700 font-semibold">
+                                    <div data-filter="${mainGroup}" class="flex items-center justify-between">
+                                        <span>${mainGroup}</span>
+                                        <svg class="group-arrow w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </summary>
+                                <div class="mt-1 space-y-1 border-l-2 border-slate-200 ml-4 pl-2">
+                        `;
+                        subGroups.forEach(group => {
+                            if (group === '視聽中心') {
+                                const groupTasks = tasks.filter(t => t.group === group);
+                                const categories = [...new Set(groupTasks.map(t => t.category || '未分類'))].sort();
+                                navHtml += `
+                                    <details class="sidebar-group">
+                                        <summary class="sidebar-link relative list-none cursor-pointer transition-colors duration-200 block py-1.5 px-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md">
+                                            <div data-filter="視聽中心" class="flex items-center justify-between">
+                                                <span>視聽中心</span>
+                                                <svg class="group-arrow w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </summary>
+                                        <div class="mt-1 space-y-1 border-l-2 border-slate-200 ml-4 pl-2">
+                                `;
+                                categories.forEach(category => {
+                                    navHtml += `<a href="#" data-filter="視聽中心" data-scroll-to-category="${category}" class="sidebar-link relative transition-colors duration-200 block py-1.5 px-2 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md">${category}</a>`;
+                                });
+                                navHtml += `</div></details>`;
+                            } else {
+                                navHtml += `<a href="#" data-filter="${group}" class="sidebar-link relative transition-colors duration-200 block py-1.5 px-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md">${group}</a>`;
+                            }
+                        });
+                        navHtml += `</div></details>`;
+                }
+            });
+
+            navHtml += `<a href="#" data-filter="奇美月" class="sidebar-link relative transition-colors duration-200 block py-2.5 px-4 rounded-md hover:bg-slate-100 text-slate-700 font-semibold">奇美月</a>`;
+            navHtml += `<a href="#" data-filter="榮譽區" class="sidebar-link relative transition-colors duration-200 block py-2.5 px-4 rounded-md hover:bg-slate-100 text-slate-700 font-semibold">榮譽區</a>`;
+
+            navContainer.innerHTML = navHtml;
+        }
+
+
+        function updateSummary(filteredTasks) {
+            const container = document.getElementById('summary-container');
+            if (currentFilter === '奇美月' || currentFilter === '榮譽區' || document.getElementById('person-filter').value !== 'all') {
+                 container.innerHTML = '';
+                 return;
+            }
+
+            const total = filteredTasks.length;
+            const todo = filteredTasks.filter(t => t.status === 1).length;
+            const upcoming = filteredTasks.filter(t => t.status === 2).length;
+            const inProgress = filteredTasks.filter(t => t.status === 3).length;
+            const done = filteredTasks.filter(t => t.status === 4).length;
+
+            const summaryData = [
+                { id: 1, title: '待辦事項', value: todo, icon: getStatusInfo(1).icon, color: 'text-[var(--color-todo-text)] bg-[var(--color-todo-bg)]' },
+                { id: 2, title: '近期規劃', value: upcoming, icon: getStatusInfo(2).icon, color: 'text-[var(--color-upcoming-text)] bg-[var(--color-upcoming-bg)]' },
+                { id: 3, title: '進行中', value: inProgress, icon: getStatusInfo(3).icon, color: 'text-[var(--color-inprogress-text)] bg-[var(--color-inprogress-bg)]' },
+                { id: 4, title: '已完成', value: done, icon: getStatusInfo(4).icon, color: 'text-[var(--color-done-text)] bg-[var(--color-done-bg)]' }
+            ];
+
+            container.innerHTML = `
+                <div class="col-span-2 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                         <div class="p-3 rounded-lg text-slate-600 bg-slate-100">
+                             <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+                        </div>
+                        <div>
+                            <p class="text-slate-500">總任務數</p>
+                            <p class="text-3xl font-bold text-slate-800">${total}</p>
+                        </div>
+                    </div>
+                </div>
+            ` +
+            summaryData.map(item => `
+                <div class="bg-white p-5 rounded-xl border border-slate-200/80 flex items-center space-x-4 cursor-pointer hover:shadow-lg hover:border-sky-300 transition-all duration-200" onclick="openModal(${item.id})">
+                    <div class="p-3 rounded-lg ${item.color}">
+                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="${item.icon}" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-slate-500">${item.title}</p>
+                        <p class="text-3xl font-bold text-slate-800">${item.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+       function renderKanbanBoard(personFilter = null) {
+            const container = document.getElementById('kanban-container');
+            let displayTasks = tasks;
+            if (personFilter) {
+                displayTasks = tasks.filter(t => t.person.includes(personFilter));
+            }
+
+            const mainGroups = [...new Set(displayTasks.map(t => t.mainGroup))];
+            
+            let 業務Html = mainGroups.map(mainGroup => {
+                const groupsInMain = [...new Set(displayTasks.filter(t=>t.mainGroup === mainGroup).map(t => t.group))];
+                let mainGroupContent = groupsInMain.map(group => {
+                    const groupTasks = displayTasks.filter(t => t.group === group);
+                    if (groupTasks.length === 0) return '';
+                    let groupContent;
+                    let chartHtml = '';
+
+                    const chartTask = groupTasks.find(t => t.type === 'chart');
+                    if (chartTask) {
+                        chartHtml = `
+                            <div class="mt-8 border-t pt-6">
+                                <h3 class="text-xl font-semibold text-slate-700 mb-4">圖表分析：115年二年期PGY師資送審概況</h3>
+                                <div class="bg-slate-100 p-4 rounded-lg relative h-96">
+                                    <canvas id="${chartTask.id}"></canvas>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (group === '視聽中心') {
+                        const categories = [...new Set(groupTasks.map(t => t.category || '未分類'))].sort();
+                        const categoriesHtml = categories.map(category => {
+                            const categoryTasks = groupTasks.filter(t => (t.category || '未分類') === category);
+                            const statusSections = [1, 2, 3, 4]
+                                .map(statusId => {
+                                    const tasksInStatus = categoryTasks.filter(t => t.status === statusId);
+                                    return tasksInStatus.length > 0 ? renderStatusSection(statusId, tasksInStatus) : '';
+                                }).filter(Boolean).join('');
+                            
+                            return categoryTasks.length > 0 ? `
+                                <div class="pt-4" id="category-${encodeURIComponent(category)}">
+                                    <h3 class="text-xl font-semibold text-slate-700 mb-5 border-b border-slate-200 pb-3">${category}</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+                                        ${statusSections}
+                                    </div>
+                                </div>` : '';
+                        }).join('');
+                        groupContent = `<h2 class="text-2xl font-bold text-slate-800 mb-2">${group}</h2><div class="space-y-8">${categoriesHtml}</div>`;
+                    } else {
+                        const statusSections = [1, 2, 3, 4]
+                            .map(statusId => {
+                                const tasksInStatus = groupTasks.filter(t => t.status === statusId && t.type !== 'chart');
+                                return tasksInStatus.length > 0 ? renderStatusSection(statusId, tasksInStatus) : '';
+                            }).filter(Boolean).join('');
+                        
+                        groupContent = `
+                            <h2 class="text-2xl font-bold text-slate-800 mb-6">${group}</h2>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-12">
+                               ${statusSections}
+                            </div>
+                            ${chartHtml}
+                            `;
+                    }
+                    return `<div id="group-${group}" class="kanban-group">${groupContent}</div>`;
+                }).join('');
+                return `<div id="main-group-${mainGroup}" class="main-kanban-group bg-white p-4 sm:p-6 rounded-xl border border-slate-200/80">${mainGroupContent}</div>`;
+            }).join('');
+            
+            let chimeiHtml = `
+                <div id="main-group-奇美月" class="main-kanban-group bg-white p-4 sm:p-6 rounded-xl border border-slate-200/80">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">奇美月 時程總覽</h2>
+                    <div class="p-4 rounded-lg bg-slate-100/80 min-h-[200px]">
+                        <div class="prose max-w-none">${chimeiMonthData['總時程表']}</div>
+                    </div>
+                </div>
+            `;
+            
+            let honorRollHtml = `
+                <div id="main-group-榮譽區" class="main-kanban-group bg-white p-4 sm:p-6 rounded-xl border border-slate-200/80">
+                     <h2 class="text-2xl font-bold text-slate-800 mb-6">榮譽區</h2>
+                     <div class="p-4 rounded-lg bg-slate-100/80 min-h-[200px]">
+                        <div class="prose max-w-none">${chimeiMonthData['榮譽區']}</div>
+                     </div>
+                </div>
+            `;
+            
+            container.innerHTML = 業務Html + chimeiHtml + honorRollHtml;
+
+            tasks.filter(t => t.type === 'chart').forEach(renderChart);
+        }
+
+        function renderChart(chartTask) {
+            const canvasElement = document.getElementById(chartTask.id);
+            if (!canvasElement) return;
+            // Destroy previous chart instance if it exists
+            const existingChart = Chart.getChart(canvasElement);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            const ctx = canvasElement.getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: chartTask.chartData,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' },
+                        tooltip: { callbacks: { footer: (tooltipItems) => '師資比: ' + chartTask.chartData.ratios[tooltipItems[0].dataIndex] } }
+                    },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: '人數' } }, x: { title: { display: true, text: '科別' } } }
+                }
+            });
+        }
+        
+        function renderStatusSection(statusId, tasksInStatus) {
+            const statusInfo = getStatusInfo(statusId);
+            const colors = {
+                1: { text: 'text-[var(--color-todo-text)]', border: 'border-[var(--color-todo-border)]', bg: 'bg-[var(--color-todo-bg)]' },
+                2: { text: 'text-[var(--color-upcoming-text)]', border: 'border-[var(--color-upcoming-border)]', bg: 'bg-[var(--color-upcoming-bg)]' },
+                3: { text: 'text-[var(--color-inprogress-text)]', border: 'border-[var(--color-inprogress-border)]', bg: 'bg-[var(--color-inprogress-bg)]' },
+                4: { text: 'text-[var(--color-done-text)]', border: 'border-[var(--color-done-border)]', bg: 'bg-[var(--color-done-bg)]' }
+            };
+            const currentColors = colors[statusId];
+
+            return `
+                <div>
+                    <div class="flex items-center justify-between mb-4 px-2">
+                         <div class="flex items-center gap-x-3">
+                             <h3 class="font-semibold text-lg ${currentColors.text}">${statusInfo.name}</h3>
+                        </div>
+                        <span class="text-sm font-medium ${currentColors.text} ${currentColors.bg} px-2 py-0.5 rounded-full">${tasksInStatus.length}</span>
+                    </div>
+                    <div class="space-y-4">
+                        ${tasksInStatus.map(task => {
+                            const taskContent = task.task.includes('\n')
+                                ? `<ul class="list-disc list-outside pl-5 space-y-1.5">${task.task.split('\n').filter(line => line.trim() !== '').map(line => `<li class="text-slate-800">${line.trim().replace(/^•\s*/, '')}</li>`).join('')}</ul>`
+                                : `<p class="font-medium text-slate-800 leading-relaxed">${task.task}</p>`;
+                            
+                            return `
+                            <div class="task-card p-4 ${currentColors.border}">
+                                <div class="font-medium leading-relaxed flex-grow">${taskContent}</div>
+                                 <p class="text-sm text-slate-500 mt-3 pt-2 border-t border-slate-100">負責人：${task.person}</p>
+                            </div>
+                            `}).join('')}
+                    </div>
+                </div>`;
+        }
+
+
+        function updateView(filter, personFilter = null) {
+            currentFilter = filter;
+            const allMainGroups = document.querySelectorAll('.main-kanban-group');
+            const mainHeader = document.getElementById('main-header');
+            let filteredTasks;
+            
+            document.getElementById('person-filter').value = personFilter || 'all';
+            document.getElementById('summary-container').style.display = 'grid';
+
+            if (personFilter) {
+                filteredTasks = tasks.filter(t => t.person.includes(personFilter));
+                mainHeader.textContent = `${personFilter}・業務總覽`;
+                renderKanbanBoard(personFilter);
+                updateSummary(filteredTasks);
+                document.getElementById('sidebar-nav').querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                return;
+            }
+
+            if (filter === 'all') {
+                filteredTasks = tasks;
+                mainHeader.textContent = '業務總覽';
+                allMainGroups.forEach(group => group.classList.remove('hidden'));
+            } else {
+                 const isMainGroup = tasks.some(t => t.mainGroup === filter) || filter === '奇美月' || filter === '榮譽區';
+                if (isMainGroup) {
+                    filteredTasks = tasks.filter(t => t.mainGroup === filter);
+                    mainHeader.textContent = `${filter}・業務總覽`;
+                } else {
+                    filteredTasks = tasks.filter(t => t.group === filter);
+                    mainHeader.textContent = `${filter}・業務進度`;
+                }
+
+                allMainGroups.forEach(mainGroup => {
+                    const mainGroupId = mainGroup.id.replace('main-group-', '');
+                     if (isMainGroup && mainGroupId === filter) {
+                        mainGroup.classList.remove('hidden');
+                        mainGroup.querySelectorAll('.kanban-group').forEach(sub => sub.classList.remove('hidden'));
+                     } else if (!isMainGroup && tasks.some(t => t.group === filter && t.mainGroup === mainGroupId)) {
+                         mainGroup.classList.remove('hidden');
+                         mainGroup.querySelectorAll('.kanban-group').forEach(subGroup => {
+                             subGroup.id === `group-${filter}` ? subGroup.classList.remove('hidden') : subGroup.classList.add('hidden');
+                         });
+                    } else {
+                        mainGroup.classList.add('hidden');
+                    }
+                });
+            }
+
+            if(filter === '奇美月' || filter === '榮譽區') {
+                document.getElementById('summary-container').style.display = 'none';
+            }
+
+            updateSummary(filteredTasks);
+        }
+
+        function openYyTalkModal() {
+            const modalContainer = document.getElementById('modal-container');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+
+            modalTitle.textContent = 'YY Talk - 2025 當代人物論壇';
+            
+            modalContent.innerHTML = `
+                <div class="space-y-8 text-slate-700">
+                    <!-- Header Info -->
+                    <div>
+                        <p class="text-sm font-semibold text-violet-600">PERSONA MEDIA</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1">2025 臺灣當代人物論壇</h3>
+                        <p class="mt-2 text-slate-500">聚焦臺南，勾勒國際視野</p>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <span>2025年11月22日 (六) 10:00 ~ 17:00</span>
+                            </div>
+                            <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <span>奇美博物館 展演廳</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agenda Timeline -->
+                    <div>
+                        <h4 class="text-lg font-bold text-slate-800 pb-2 mb-6 flex items-center gap-3">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                            <span>活動議程</span>
+                        </h4>
+                        <div class="relative pl-6 sm:pl-8">
+                            <div class="absolute left-3 sm:left-4 top-2 h-full w-0.5 bg-slate-200"></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-slate-400 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-slate-500">09:30 - 10:30</p><p class="font-semibold text-slate-800 mt-1">來賓入場 & 論壇開幕式</p><p class="text-sm text-slate-500 mt-1">致詞貴賓：賴清德總統、臺南市府代表、許家彰館長</p></div></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-sky-500 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-sky-600">10:30 - 12:00</p><p class="font-semibold text-sky-800 mt-1 text-lg">議題 (一)：醫療趨勢</p><div class="mt-2 space-y-2 text-sm border-l-2 border-sky-200 pl-4 py-2"><p><span class="font-semibold">林宏榮</span> | 奇美醫院院長</p><p><span class="font-semibold">莊詠鈞</span> | 偉喬生醫董事長 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p><p><span class="font-semibold">周建文</span> | 博仁堂負責人 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p></div></div></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-slate-400 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-slate-500">12:00 - 13:00</p><p class="font-semibold text-slate-800 mt-1">午餐 / 午休時間</p></div></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-emerald-600">13:00 - 14:30</p><p class="font-semibold text-emerald-800 mt-1 text-lg">議題 (二)：AI走向</p><div class="mt-2 space-y-2 text-sm border-l-2 border-emerald-200 pl-4 py-2"><p><span class="font-semibold">吳誠文</span> | 國科會主委 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p><p><span class="font-semibold">黃仲銘</span> | 資策會董事長 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p><p><span class="font-semibold">黃彥男</span> | 數位發展部部長</p></div></div></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-slate-400 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-slate-500">14:30 - 14:40</p><p class="font-semibold text-slate-800 mt-1">中場休息</p></div></div>
+                            <div class="relative mb-6 flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-violet-500 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-violet-600">14:40 - 16:40</p><p class="font-semibold text-violet-800 mt-1 text-lg">議題 (三)：地方創生與開創世代</p><div class="mt-2 space-y-2 text-sm border-l-2 border-violet-200 pl-4 py-2"><p><span class="font-semibold">陳美伶</span> | 臺灣地方創生基金會董事長</p><p><span class="font-semibold">李政憲</span> | 那顆炭創辦人 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p><p><span class="font-semibold">趙啟宏</span> | 清心福全執行長 <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full font-medium">邀請中</span></p><p class="text-slate-500">開創世代講者邀約中...</p></div></div></div>
+                            <div class="relative flex items-start gap-4"><div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-slate-400 rounded-full border-4 border-white"></div><div class="ml-4 w-full"><p class="font-bold text-slate-500">16:40 ~</p><p class="font-semibold text-slate-800 mt-1">神祕嘉賓 & 活動結束</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+        }
+
+        function openPgyModal() {
+            const modalContainer = document.getElementById('modal-container');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+
+            modalTitle.textContent = '11/22 醫師PGY說明會 流程規劃';
+
+            const pgyContentHtml = `
+                <div class="space-y-8 text-slate-700">
+                    <!-- Key Summary Section -->
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 pb-2 mb-4 flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            <span>重點彙整</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-sky-50 border border-sky-200 p-4 rounded-xl flex items-start gap-4">
+                                <div class="flex-shrink-0 bg-sky-100 text-sky-600 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                                <div><p class="font-semibold text-sky-800">整體定位</p><p class="text-sm mt-1">聚焦「兩年PGY訓練藍圖+各專科特色」，強調真實案例、工作-生活平衡與學習資源。</p></div>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-start gap-4">
+                                <div class="flex-shrink-0 bg-emerald-100 text-emerald-600 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg></div>
+                                <div><p class="font-semibold text-emerald-800">開場與簡報</p><p class="text-sm mt-1">播放敘事醫學影片開場，由主講人分享自身PGY經歷。接續五大科簡報 (15分鐘/科)，並統一簡報風格。</p></div>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-4">
+                                <div class="flex-shrink-0 bg-amber-100 text-amber-600 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2m6-4v2m-6-2v2m6 4v2m-6-2v2" /></svg></div>
+                                <div><p class="font-semibold text-amber-800">互動設計</p><p class="text-sm mt-1">設有專科/研究諮詢攤位，並輪播展示薪資、值班費、課程亮點等資訊，簡報後提供90分鐘自由交流與輕食時間。</p></div>
+                            </div>
+                            <div class="bg-violet-50 border border-violet-200 p-4 rounded-xl flex items-start gap-4">
+                                <div class="flex-shrink-0 bg-violet-100 text-violet-600 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
+                                <div><p class="font-semibold text-violet-800">場地與人選</p><p class="text-sm mt-1">於豐收廳舉辦，利用戶外平台規劃下午茶區。講者包含各大科教學負責人及優秀PGY代表。</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Section -->
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 pb-2 mb-6 flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <span>活動流程 (上午/下午場)</span>
+                        </h3>
+                        <div class="relative pl-6 sm:pl-8">
+                            <div class="absolute left-3 sm:left-4 top-2 h-full w-0.5 bg-slate-200"></div>
+                            <!-- Timeline Item 1 -->
+                            <div class="relative mb-8 flex items-start gap-4">
+                                <div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-sky-500 rounded-full border-4 border-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                                <div class="w-full ml-4">
+                                    <p class="font-bold text-slate-600">09:30-09:45 / 13:30-13:45</p>
+                                    <p class="font-semibold text-slate-800 mt-1">參加者報到 & 影片暖場</p>
+                                    <p class="text-sm text-slate-500 mt-1">循環播放敘事醫學影片</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 2 -->
+                            <div class="relative mb-8 flex items-start gap-4">
+                               <div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-sky-500 rounded-full border-4 border-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                                <div class="w-full ml-4">
+                                    <p class="font-bold text-slate-600">09:45-10:00 / 13:45-14:00</p>
+                                    <p class="font-semibold text-slate-800 mt-1">主持人開場</p>
+                                    <p class="text-sm text-slate-500 mt-1">引言、流程說明、講者經驗分享</p>
+                                </div>
+                            </div>
+                            <!-- Timeline Item 3 -->
+                            <div class="relative mb-8 flex items-start gap-4">
+                                <div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-sky-500 rounded-full border-4 border-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                                <div class="w-full ml-4">
+                                    <p class="font-bold text-slate-600">10:00-11:15 / 14:00-15:15</p>
+                                    <p class="font-semibold text-slate-800 mt-1">五大科簡報 (15分/科) & 合影</p>
+                                    <p class="text-sm text-slate-500 mt-1">於豐收廳內部，需時間掌控</p>
+                                </div>
+                            </div>
+                             <!-- Timeline Item 4 -->
+                            <div class="relative flex items-start gap-4">
+                                <div class="absolute -left-1.5 sm:-left-2.5 top-1.5 w-6 h-6 bg-sky-500 rounded-full border-4 border-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                                <div class="w-full ml-4">
+                                    <p class="font-bold text-slate-600">11:15-12:30 / 15:15-16:30</p>
+                                    <p class="font-semibold text-slate-800 mt-1">互動交流 & 輕食</p>
+                                    <p class="text-sm text-slate-500 mt-1">於豐收廳外部，設有五大科/研究諮詢區</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modalContent.innerHTML = pgyContentHtml;
+            modalContainer.classList.remove('hidden');
+        }
+
+        function openModal(statusId) {
+            const modalContainer = document.getElementById('modal-container');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const statusInfo = getStatusInfo(statusId);
+
+            let filteredTasks;
+            let titleText;
+
+            const personFilter = document.getElementById('person-filter').value;
+             if (personFilter !== 'all') {
+                filteredTasks = tasks.filter(task => task.status === statusId && task.person.includes(personFilter));
+                titleText = `${personFilter}・${statusInfo.name}項目`;
+            } else if (currentFilter === 'all') {
+                filteredTasks = tasks.filter(task => task.status === statusId);
+                titleText = `所有「${statusInfo.name}」項目`;
+            } else {
+                 const isMainGroup = tasks.some(t => t.mainGroup === currentFilter);
+                if (isMainGroup) {
+                     filteredTasks = tasks.filter(task => task.status === statusId && task.mainGroup === currentFilter);
+                } else {
+                     filteredTasks = tasks.filter(task => task.status === statusId && task.group === currentFilter);
+                }
+                titleText = `${currentFilter}・${statusInfo.name}項目`;
+            }
+
+
+            modalTitle.textContent = titleText;
+            modalContent.innerHTML = filteredTasks.length > 0 
+                ? filteredTasks.map(task => {
+                    const taskContent = task.task.includes('\n') ? `<ul class="list-disc list-outside pl-5 space-y-1">${task.task.split('\n').filter(line => line.trim() !== '').map(line => `<li>${line.trim().replace(/^•\s*/, '')}</li>`).join('')}</ul>` : task.task;
+
+                    return `<div class="task-card p-4 border-[var(--color-${statusId === 1 ? 'todo' : statusId === 2 ? 'upcoming' : statusId === 3 ? 'inprogress' : 'done'}-border)]">
+                            <p class="font-bold text-slate-600">${task.group}</p>
+                            <div class="font-medium text-slate-800 leading-relaxed mt-2">${taskContent}</div>
+                            <p class="text-sm text-slate-500 mt-3 text-right pt-2 border-t border-slate-100">負責人：${task.person}</p>
+                        </div>`
+                }).join('')
+                : '<p class="text-slate-500 text-center">此狀態下沒有任何項目。</p>';
+            
+            modalContainer.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-container').classList.add('hidden');
+        }
+
+        function renderPersonFilter() {
+            const select = document.getElementById('person-filter');
+            const people = [...new Set(tasks.flatMap(t => t.person.split(/[,、]\s*/)))].sort();
+            select.innerHTML = `<option value="all">依負責人篩選</option>`;
+            people.forEach(person => {
+                if(person.trim()){
+                    select.innerHTML += `<option value="${person.trim()}">${person.trim()}</option>`;
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            const sidebar = document.getElementById('sidebar-nav');
+            sidebar.addEventListener('click', e => {
+                const link = e.target.closest('a.sidebar-link, summary > div');
+                if (!link) return;
+                
+                const isSummaryDiv = link.tagName.toLowerCase() === 'div';
+                
+                if (!isSummaryDiv) {
+                     e.preventDefault();
+                }
+
+                const personFilterSelect = document.getElementById('person-filter');
+                if (personFilterSelect.value !== 'all') {
+                    personFilterSelect.value = 'all';
+                    renderKanbanBoard(); 
+                }
+
+                const targetLink = isSummaryDiv ? link.closest('summary') : e.target.closest('a');
+                
+                sidebar.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                
+                if (targetLink) {
+                    targetLink.classList.add('active');
+                     if(targetLink.closest('details') && !targetLink.matches('summary')) {
+                       targetLink.closest('details').querySelector('summary').classList.add('active');
+                    }
+                }
+                
+
+                const filter = link.dataset.filter;
+                updateView(filter);
+
+                const scrollTo = link.dataset.scrollToCategory;
+                if (scrollTo) {
+                    const targetElement = document.getElementById(`category-${encodeURIComponent(scrollTo)}`);
+                    if (targetElement) {
+                         targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                } else {
+                    document.getElementById('main-content').scrollTop = 0;
+                }
+            });
+
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            document.getElementById('modal-container').addEventListener('click', (e) => {
+                if(e.target.id === 'modal-container') closeModal();
+            });
+
+            document.getElementById('person-filter').addEventListener('change', (e) => {
+                const selectedPerson = e.target.value;
+                if (selectedPerson === 'all') {
+                    renderKanbanBoard();
+                    updateView('all');
+                    const sidebarNav = document.getElementById('sidebar-nav');
+                    sidebarNav.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    sidebarNav.querySelector('a[data-filter="all"]').classList.add('active');
+                } else {
+                    updateView('person', selectedPerson);
+                }
+            });
+
+        }
+    </script>
+</body>
+</html>
+
