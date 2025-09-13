@@ -70,7 +70,9 @@
         <aside class="w-full md:w-72 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
             <div class="p-5 border-b border-slate-200">
                 <div class="flex items-center space-x-3">
-                    <img src="教學部-LOGO.png" alt="教學部 Logo" class="w-10 h-10 object-contain" />
+                    <div class="bg-sky-100 text-sky-600 p-2 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
                     <div>
                         <h2 class="text-xl font-bold text-slate-800">業務彙整</h2>
                         <p class="text-sm text-slate-500">單位導覽</p>
@@ -130,96 +132,119 @@
     <script>
         // Status: 1=待辦, 2=近期規劃, 3=進行中, 4=已完成
         const tasks = [
-            { mainGroup: '教學部業務', group: '教學部', task: '奇美月系列活動規劃：\n• 9/8(一)與策展公司進行第3次規劃討論\n• 9/10(三)與策展公司討論活動流程細節\n• 11/22(六)PGY說明會\n• 11/23(日)醫學教育研討會', person: '全體同仁', status: 3 },
-            { mainGroup: '教學部業務', group: '教學部', task: '奇美暖心角第二波醫療人文展於9/8(一)開展，展期至9/30。', person: '陳詩芸', status: 3 },
-            { mainGroup: '教學部業務', group: '教學部', task: '醫學院校教職：\n彙整高雄醫學大學114學年度第二學期兼任教師續聘作業，9/29(一)截止。', person: '許淑怡', status: 3 },
-            { mainGroup: '教學部業務', group: '教學部', task: 'ISO 7101內部稽核種子教育訓練：9/2、9/23、9/30。', person: '劉雯, 吳曉琪', status: 3 },
+            // 教學部
+            { mainGroup: '教學部業務', group: '教學部', task: '奇美月系列活動規劃：\n• 9/8(一)與策展公司進行第3次規劃討論\n• 9/10(三)與策展公司討論活動流程細節, 11/22(六)PGY說明會、11/23(日)醫學教育研討會暨共識營 workshop', person: '全體同仁', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: '奇美暖心角第二波醫療人文展於9/8(一)開展，共展出2025年敘事醫學系列競賽攝影組8幅作品，展期至9/30。', person: '陳詩芸', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: '醫學院校教職：\n彙整高雄醫學大學114學年度第二學期兼任教師續聘作業，截止日期: 9/29(一)前寄回。', person: '許淑怡', status: 3 },
+            { mainGroup: '教學部業務', group: '教學部', task: 'ISO 7101 內部稽核種子教育訓練：9/2、9/23、9/30。', person: '劉雯, 吳曉琪', status: 3 },
             { mainGroup: '教學部業務', group: '教學部', task: '114年上半年網路教學平台滿意度調查。', person: '林淑雅', status: 3 },
+
+            // 教師培育中心
             { mainGroup: '教學部業務', group: '教師培育中心', task: '進行112-113年度主治醫師論文發表結算追蹤作業。', person: '林汶秀', status: 3 },
-            { mainGroup: '教學部業務', group: '教師培育中心', task: '「台南市醫師公會暨奇美醫院聯合迎新餐會」更改至12/12(五)18:00。', person: '高瑞穗', status: 2 },
-            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/22(一) 實證醫學課程', person: '高瑞穗', status: 2 },
-            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/16(二) 教學技巧課程', person: '林淑雅', status: 2 },
-            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/19(五) 醫學人文課程', person: '林淑雅', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '原11/7「台南市醫師公會暨奇美醫院聯合迎新餐會」更改至12/12(五)18:00，地點：總理大餐廳。', person: '高瑞穗', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/22(一) 13:00-14:00 實證醫學課程「RoB 2.0/CEBM/CASP 評讀(RCT)」，胃腸肝膽科 黃博裕醫師主講。', person: '高瑞穗', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/16(二) 13:00-14:00 教學技巧課程「從PubMed到AI:下一代文獻搜尋策略」，精神醫學部 劉亭慧醫師主講。', person: '林淑雅', status: 2 },
+            { mainGroup: '教學部業務', group: '教師培育中心', task: '9/19(五) 13:00-14:00 醫學人文課程：「災難醫療救助」，大林慈濟醫院急診部 李宜恭主任主講。', person: '林淑雅', status: 2 },
+
+            // 住院醫師訓練小組
             { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '統計114年度「新進住院醫師職前訓練課程」成果。', person: '林淑雅', status: 3 },
             { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '彙整114年度住院醫師年度評比結果。', person: '林淑雅', status: 3 },
             { mainGroup: '教學部業務', group: '住院醫師訓練小組', task: '住院醫師模擬考成績追蹤。', person: '林淑雅', status: 3 },
+            
+            // 畢業後一般醫學訓練
             { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', type: 'chart', id: 'pgy-chart', task: '115年二年期PGY訓練師資送審(待審核)。', person: '吳曉琪', status: 3, chartData: { labels: ['內科', '外科', '婦產科', '兒科', '急診'], datasets: [{ label: '主治醫師人數', data: [67, 42, 13, 15, 40], backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }, { label: '一般醫學師資', data: [47, 27, 12, 14, 32], backgroundColor: 'rgba(255, 159, 64, 0.6)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }], ratios: ['70%', '64%', '92%', '93%', '80%'] } },
             { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '115年二年期PGY訓練計畫新增安南醫院-婦產科訓練。', person: '吳曉琪', status: 3 },
-            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '9/19(五)16:00-17:00「社區醫學訓練說明會」。', person: '王嬿茹', status: 2 },
+            { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '9/19(五) 16:00-17:00「社區醫學訓練說明會」於第二醫療大樓11樓健檢中心外場。', person: '王嬿茹', status: 2 },
             { mainGroup: '教學部業務', group: '畢業後一般醫學訓練', task: '114/9/12已完成115年二年期PGY訓練師資送審。', person: '吳曉琪', status: 4 },
-            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '辦理「完訓教師成效追蹤座談會」:\n• 9/11(四) 柳營奇美醫院\n• 9/19(五) 佳里奇美醫院\n• 9/26(五) 總院奇美醫院', person: '王嬿茹', status: 3 },
-            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/22(五)「院級全人照護跨領域教學討論會議」。', person: '王嬿茹, 楊宜婷, 陳詩芸', status: 2 },
-            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/9前已完成「一般醫學師資培育及PGY OSCE教學影片競賽」送件。', person: '王嬿茹', status: 4 },
+            
+            // 一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '辦理一般醫學師資培育之「完訓教師成效追蹤座談會」:\n• 9/11(四) 13:00 柳營奇美醫院\n• 9/19(五) 13:00 佳里奇美醫院\n• 9/26(五) 12:00 總院奇美醫院', person: '王嬿茹', status: 3 },
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/22(五) 13:00-14:00「院級全人照護跨領域教學討論會議」，於第五醫療大樓5樓552會議室。', person: '王嬿茹, 楊宜婷, 陳詩芸', status: 2 },
+            { mainGroup: '教學部業務', group: '一般醫學內科訓練示範中心及一般醫學訓練師資培育計畫', task: '9/9 前已完成台灣醫學教育學會「一般醫學師資培育及PGY OSCE 教學影片競賽」之送件。', person: '王嬿茹', status: 4 },
+            
+            // 實習醫學生訓練小組
             { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: 'UGY學員病歷寫作指導課程 (9/09、9/10、9/17)。', person: '許淑怡, 侯昱瑾', status: 2 },
-            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '9/22(一)中山醫大第二梯報到職前訓。', person: '許淑怡, 侯昱瑾', status: 2 },
-            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '實習訪視及參訪時間：\n• 中山後醫實習訪視: 10/07(二)\n• 中山後醫實習參訪: 10/21(二)\n• 中山醫大實習訪視: 10/23(四)', person: '許淑怡, 侯昱瑾', status: 2 },
-            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '更新TMAC評鑑日期：\n• 國立中山大學：12/10(三)\n• 中山醫學大學：12/17(三)', person: '許淑怡, 侯昱瑾', status: 3 },
-            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/17(三) 腹腔鏡模擬箱課程', person: '黃惠津', status: 2 },
-            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/25(四) 3D列印血管縫合課程', person: '黃惠津', status: 2 },
-            { mainGroup: '教學部業務', group: '臨床技能中心', task: '休克處置演練 (9/09、9/30)', person: '黃惠津', status: 2 },
-            { mainGroup: '教學部業務', group: '臨床技能中心', task: 'TRM急救團隊演練 (9/16、9/23)', person: '黃惠津', status: 2 },
-            { mainGroup: '教學部業務', group: '臨床技能中心', task: '呼吸道擬真練習1.0 (9/11、9/18)', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '9/22(一) 中山醫大第二梯報到職前訓。', person: '許淑怡, 侯昱瑾', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '實習訪視及參訪時間：\n• 中山後醫實習訪視: 10/07(二) 14:30-16:30\n• 中山後醫實習參訪: 10/21(二) 14:30-16:30\n• 中山醫大實習訪視: 10/23(四) 10:00-12:00', person: '許淑怡, 侯昱瑾', status: 2 },
+            { mainGroup: '教學部業務', group: '實習醫學生訓練小組', task: '更新TMAC評鑑日期：\n• 國立中山大學：12/10(三) 07:30-14:00\n• 中山醫學大學：12/17(三) 07:30-14:00', person: '許淑怡, 侯昱瑾', status: 3 },
+            
+            // 臨床技能中心
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/17(三) 10:00-11:00 腹腔鏡模擬箱課程', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '9/25(四) 13:30-15:00 3D列印血管縫合課程', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '休克處置演練 (9/09、9/30) 13:30-15:30', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: 'TRM急救團隊演練 (9/16、9/23) 13:30-15:30', person: '黃惠津', status: 2 },
+            { mainGroup: '教學部業務', group: '臨床技能中心', task: '呼吸道擬真練習1.0 (9/11、9/18) 13:30-15:30', person: '黃惠津', status: 2 },
+            
+            // OSCE小組
             { mainGroup: '教學部業務', group: 'OSCE小組', task: '114年第二次OSCE外派考官：\n• 10/25(六) 嘉義長庚 (謝孟倉主任)\n• 10/26(日) 嘉義長庚 (葉敬淳醫師)', person: '盧英云', status: 2 },
-            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成OSCE考官及標準化病人資格展延認證。', person: '盧英云', status: 3 },
-            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「臨床技能評估測驗計畫」自評表。', person: '盧英云', status: 3 },
-            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「臨床技能測驗優良教案甄選」送件。', person: '盧英云', status: 3 },
-            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/8前已完成OSCE教案競賽投稿。', person: '盧英云', status: 4 },
-            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/16(四)「醫事職類全人照護跨領域教學討論會議」。', person: '楊宜婷, 陳詩芸', status: 2 },
-            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/17(五) 辦理「藝術融入醫學人文教育課程」。', person: '楊宜婷, 陳詩芸', status: 2 },
-            { mainGroup: '教學部業務', group: '臨床醫事人員培訓計畫', task: '114年度臨培主計畫已於9/10(三)送審。', person: '楊宜婷, 許淑怡', status: 4 },
-            { mainGroup: '教學部業務', group: '台灣醫事聯合臨床技能發展學會', task: '9/20(六) 辦理「2025年會員大會暨學術研討會」。', person: '楊依玲', status: 2 },
-            { mainGroup: '教學部業務', group: '台灣醫事聯合臨床技能發展學會', task: '9/19(五)下午進行場佈。', person: '楊依玲', status: 2 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成OSCE考官(15位)及標準化病人(9位)資格展延認證。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「推廣教學醫院辦理臨床技能評估測驗計畫」自評表。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/30前完成「臨床技能測驗優良教案甄選」之送件。', person: '盧英云', status: 3 },
+            { mainGroup: '教學部業務', group: 'OSCE小組', task: '9/8前已完成台灣擬真醫學教育學會OSCE教案競賽之投稿 (聽力、營養科、護理部)。', person: '盧英云', status: 4 },
+            
+            // 醫事人員教育訓練小組
+            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/16(四) 16:00「醫事職類全人照護跨領域教學討論會議」於第五醫療大樓5樓553會議室。', person: '楊宜婷, 陳詩芸', status: 2 },
+            { mainGroup: '教學部業務', group: '醫事人員教育訓練小組', task: '10/17(五) 13:00 辦理「與奇美博物館結合之將藝術融入各職類醫學人文教育課程」。', person: '楊宜婷, 陳詩芸', status: 2 },
+            
+            // 臨床醫事人員培訓計畫
+            { mainGroup: '教學部業務', group: '臨床醫事人員培訓計畫', task: '114年度臨培主計畫及各醫事職類培訓計畫業已於9/10(三)送審至衛生福利部。', person: '楊宜婷, 許淑怡', status: 4 },
+            
+            // 台灣醫事聯合臨床技能發展學會
+            { mainGroup: '教學部業務', group: '台灣醫事聯合臨床技能發展學會', task: '9/20(六) 辦理「2025年會員大會暨學術研討會」，並召開「第4屆第3次理監事聯席會議」，預計9/19(五)下午進行場佈。', person: '楊依玲', status: 2 },
+            
+            // 病歷審查小組
             { mainGroup: '教學部業務', group: '病歷審查小組', task: '完成114年第三季(7-9月)住院病歷行政審查。', person: '李迎真, 林盟淦', status: 3 },
-            { mainGroup: '教學部業務', group: '病歷審查小組', task: '10月起進行第四季住院病歷行政審查。', person: '李迎真, 林盟淦', status: 2 },
+            { mainGroup: '教學部業務', group: '病歷審查小組', task: '10月起進行114年第四季(10-12月)住院病歷行政審查。', person: '李迎真, 林盟淦', status: 2 },
+            
+            // 圖書館
             { mainGroup: '教學部業務', group: '圖書館', task: '李從政退休，周晉憶新進人員訓練。\n書刊借閱流通，市圖借書每周送書，每月新書編目入檔。\n年度西文期刊訂購問卷調查。\nJCR發佈2024年SCI.SSCI.ESCI.AHCI數據下載。\n每月最新消息、教育訓練：每月新進護理、每周新進護生、8/7 Medline & EMBASE & JBI@OVID、9/10 DynaMed。\n麻醉專科護理師訓練醫院評鑑資料提供。', person: '陳憶玲', status: 3 },
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'ISO 7101種子稽核員教育訓練課程 (9/23, 9/30)。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '委員會審閱與出版申請事務。', person: '許召玟', status: 3},
+            
+            // 視聽中心
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'ISO 7101 種子稽核員教育訓練課程 (9/2, 9/23, 9/30)。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9/11 參與台北世貿一館2025亞太永續博覽會頒獎典禮', person: '許召玟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '出版暨數位溝通委員會委員審閱事務(出版品2件; 影片1部: podcast 2集)。', person: '許召玟', status: 3},
             { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '影片授權1筆進行中。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9月份會議室月巡檢。', person: '陳琬婷', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '會議室相關事務 (狀況排除、公文、維護、借用)。', person: '葉品妤', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9/21 假日會議輪值。', person: '許召玟', status: 2},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'Nas儲存設備擴充評估 (待報價)。', person: '林雨蕎', status: 1},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '主任交辦事項：Nano banana測試。', person: '林雨蕎', status: 1},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9/11 已參與亞太永續博覽會頒獎典禮。', person: '許召玟', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '已完成標準文件表單。', person: '許召玟', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '151期奇美醫訊 (9/19截稿；9/22~10/01催稿、送審)。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '協助大聲公投稿審閱與上架事務。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '稿件處理：審閱中8件，委員審閱中8件。', person: '李偲詩', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '頭條、榮譽榜、活動快遞製作與發佈。', person: '陳琬婷', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '首頁輪播製作上架。', person: '黃怡瑄', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '已發佈花絮/散文12件、榮譽榜12件。', person: '李偲詩', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '節目錄製 (9/19x2, 9/24x3)。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '多個節目送審、校稿、剪輯中。', person: '林雨蕎, 李偲詩, 陳琬婷, 黃怡瑄, 陳慧娟, 葉品妤', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '9/17「護理衛教室」EP21 (待進行)', person: '陳琬婷', status: 2},
-            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '9/26「第一線護理人物專訪」EP05 (待進行)', person: '陳慧娟', status: 2},
-            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '8/25「護理衛教室」EP18，已完成。', person: '黃怡瑄', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: 'IHF會員宣傳影片、讀書會影片x2製作。', person: '許召玟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '醫院簡介影片更新、IHF影片校稿中。', person: '林雨蕎, 李偲詩', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '9/12 鎮靜安眠課程影片，已完成。', person: '林雨蕎', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '一般醫學師資培育影片，已完成。', person: '黃怡瑄', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '敘事醫學競賽影片，已完成。', person: '黃怡瑄', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '各類海報、設計製作與校稿中。', person: '許召玟, 林雨蕎, 蕭麗香, 李偲詩, 陳琬婷, 陳慧娟, 葉品妤', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '奇美大小事podcast於空橋走廊宣傳設計 (待進行)。', person: '陳慧娟', status: 1},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '已完成海報4件。', person: '李偲詩, 陳琬婷', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '9/25 拍攝 (待申請)。', person: '許召玟', status: 1},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '規劃拍攝行程 (9/12, 9/13, 9/21, 10/2)。', person: '黃怡瑄, 陳慧娟, 葉品妤', status: 2},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '已完成多項拍攝活動。', person: '陳琬婷, 黃怡瑄, 陳慧娟', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '體重管理手冊 (印刷中)。', person: '蕭麗香', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '醫院簡介 (中/英/簡) 更新中。', person: '蕭麗香', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '151期奇美醫訊資料收集整理。', person: '蕭麗香', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '佳里院區Joomla網頁新製。', person: '蕭麗香', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '多項網頁製作中 (佳里精神科、教學平台、總院就醫指南、器捐牆)。', person: '陳琬婷', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '全口植牙術後注意事項網頁 (待校稿)。', person: '黃怡瑄', status: 1},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '已完成多項網頁製作與上架。', person: '蕭麗香, 陳琬婷, 黃怡瑄', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '4份衛教單張 (校稿中)。', person: '李偲詩', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '柳營住院須知手冊 (製作中)。', person: '陳琬婷', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '檢查室衛教單張更新日期x7 (校稿中)。', person: '陳慧娟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '已完成2項衛教單張。', person: '李偲詩, 陳琬婷', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '呼吸治療科/復健部海報 (製作中)。', person: '陳慧娟', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '排版製作3筆，直接輸出4筆。', person: '黃怡瑄', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '已完成2項醫學海報。', person: '陳慧娟, 陳琬婷', status: 4},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '其他', task: '各項常規行政業務處理中。', person: '林雨蕎, 李偲詩, 陳慧娟, 黃怡瑄', status: 3},
-            { mainGroup: '教學部業務', group: '視聽中心', category: '其他', task: '整合醫療中心18個壓克力名牌(已完成)', person: '陳慧娟', status: 4}
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '假日會議輪值，共1場: 9/21。', person: '許召玟', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '151期奇美醫訊各類相關事務: 9/19截稿; 09/22~10/01催稿、送審。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: 'Podcast 業務，共7場錄製 (9/1、9/9、9/19x2、9/24x3)。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '2025聖誕賀卡設計', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '視訊媒體業務，共3部: 2025世界醫院大會(IHF)會員宣傳影片(英文版)、讀書會x2。', person: '許召玟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '9/25 現場拍攝 (待申請)。', person: '許召玟', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: 'Nas 儲存設備擴充評估 (待報價)。', person: '林雨蕎', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '主任交辦事項：Nano banana 測試。', person: '林雨蕎', status: 1},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '<Podcast> 共3筆送審中：\n• 奇美大小事【EP15】\n• 第一線護理人物專訪【EP04】\n• 護理衛教室【EP17】', person: '林雨蕎', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '影片業務：\n• 奇美醫院簡介影片(繁/簡/英版)\n• 佳里院區醫院簡介影片(中文版)\n• IHF影片(協助拍攝)', person: '林雨蕎', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '9/12(六)鎮靜安眠類管制藥品教育訓練課程影片', person: '林雨蕎', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '網頁製作：\n• 台灣持續改善競賽獎盃影像處理、網頁製作*5座\n• 照片收藏館網頁製作*4本', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: 'Joomla新製網頁：\n• 佳里皮膚科(已上架)\n• 佳里婦產科(已給單位)\n• 佳里加護醫學科(已上架)', person: '蕭麗香', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '出版類', task: '出版品：\n• <新制>營養科體重管理手冊-手術篇\n• 體重管理手冊-生活型態篇(印刷中)\n• 醫院簡介(中/英/簡)人數更新中\n• 151期奇美醫訊資料收集', person: '蕭麗香', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '<一般海報>：\n• 已完成3件\n• 直接輸出1件\n• 製作中3件', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: 'IHF(國際醫院聯盟大會)影片(校稿中)', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: 'Podcast 幸福330孕產我陪你 EP32~34 (校稿中)', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '<衛教單張>：\n• 已完成1件 (預防及失禁性皮膚炎照護)\n• 校稿中4件 (含鉀量表、咀嚼吞嚥障礙飲食印/越/英文版)', person: '李偲詩', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '<大聲公>：\n• 已發佈12件(花絮:2/散文:10)\n• 審閱完成(尚未發佈)8件\n• 委員審閱中8件\n• 榮譽榜已公告12件', person: '李偲詩', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '<一般海報>：\n• 已完成1件\n• 校對中4件\n• 製作中1件', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: '9/17「護理衛教室,你不知道的事」EP21(待進行)', person: '陳琬婷', status: 2},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '<大聲公>：\n• 頭條新聞,共3則\n• 榮譽榜、活動快遞協助製作&發佈', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '<衛教出版品>：\n• 柳營導航微創手術(已上架)\n• 柳營住院須知手冊(製作中)', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '<網頁類>：\n• 已完成10件\n• 製作中4件(佳里精神科、教學平台、總院就醫指南、器捐牆)', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '9月份會議室月巡檢', person: '陳琬婷', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '網頁', task: '護理部秋季電子報製作(已上架)', person: '黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: 'Podcast：\n• 8/25「護理衛教室」EP18(已完成)\n• 9/2「護理衛教室」EP19(校稿中)', person: '黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '<現場拍攝>：\n• 9/2心臟血管內科醫師個人照\n• 9/5創業友善護理職場研習會\n• 9/21國際失智症日活動', person: '黃怡瑄', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '<醫學海報>：\n• 排版製作共3筆\n• 直接輸出共4筆', person: '黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '大聲公', task: '大聲公首頁輪播，製作上架，1則。', person: '黃怡瑄', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '<一般海報>：\n• 臨場健康服務(校稿中)\n• 戒菸宣導(製作中)', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '醫學海報', task: '<醫學海報>：\n• 護理部-8樓A區(已完成)\n• 呼吸治療科(製作中)\n• 復健部(製作中)', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '影片', task: '敘事醫學競賽獲獎8作品影片(已完成)', person: '陳慧娟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: 'Podcast：\n• 奇美大小事【EP11】(校稿中)\n• 有感媽媽【EP04】(校稿中)\n• 幸福330【EP35】(製作中)\n• 9/26第一線護理人物【EP05】(待進行)', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '<現場拍攝>：\n• 常駐承攬廠商健走(已完成)\n• 醫師個人照(已完成)\n• 9/13高階主管共識會議(待進行)\n• 10/2腦中風疾病認證團隊合照(待進行)', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '衛教單張', task: '檢查室衛教單張院內外更新日期x7(校稿中)', person: '陳慧娟', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '其他', task: '整合醫療中心18個壓克力名牌(已完成)', person: '陳慧娟', status: 4},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '核心業務', task: '會議室相關事務 (狀況排除、公文、維護、借用、巡檢)。', person: '葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '平面設計', task: '<平面類>共5筆，3件已完成，2件製作/校稿中。', person: '葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: 'Podcast', task: 'Podcast：\n• 護理衛教室【EP20】(剪輯中)\n• 奇美大小事【EP12,13】(校稿中)', person: '葉品妤', status: 3},
+            { mainGroup: '教學部業務', group: '視聽中心', category: '現場拍攝', task: '<現場拍攝>：\n• 9/12醫師個人照\n• 2025年年度學術研討會拍攝', person: '葉品妤', status: 2}
         ];
         
         const chimeiMonthData = {
@@ -323,20 +348,20 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Honor Item 1 -->
                     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-4">
-                        <h3 class="text-xl font-bold text-slate-800">教學部榮獲2025年社團法人台灣敏捷協會ACT─年度敏捷組織</h3>
-                        <div class="w-full">
-                            <img src="2025敏捷大賞-年度敏捷組織.jpg"
-                                 onerror="this.onerror=null;this.src='https://placehold.co/800x560/e2e8f0/475569?text=獎狀圖片載入失敗';"
-                                 alt="2025年度敏捷組織獎狀" class="rounded-lg shadow-md w-full object-contain border">
+                         <h3 class="text-xl font-bold text-slate-800">教學部榮獲 2025 ACT 年度敏捷組織</h3>
+                         <div class="w-full">
+                             <img src="https://raw.githubusercontent.com/Chimei-Teach/chimei-month-dashboard/main/2025%E6%95%8F%E6%8D%B7%E5%A4%A7%E8%B3%9E-%E5%B9%B4%E5%BA%A6%E6%95%8F%E6%8D%B7%E7%B5%84%E7%B9%94.jpg" 
+                                  onerror="this.onerror=null;this.src='https://placehold.co/800x560/e2e8f0/475569?text=獎狀圖片載入失敗';" 
+                                  alt="2025年度敏捷組織獎狀" class="rounded-lg shadow-md w-full object-contain border">
                         </div>
                     </div>
                     <!-- Honor Item 2 -->
                     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-4">
-                        <h3 class="text-xl font-bold text-slate-800">Gemini Certified Educator 證照</h3>
-                        <p class="text-slate-600">目前共 <span class="font-bold text-2xl text-blue-600">13</span> 人通過</p>
+                        <h3 class="text-xl font-bold text-slate-800">教學部同仁考取 Gemini Certified Educator</h3>
+                        <p class="text-slate-600">目前共 <span class="font-bold text-2xl text-blue-600">13</span> 人通過！</p>
                         <div class="w-full">
-                            <img src="Gemini-廖家德.jpg"
-                                 onerror="this.onerror=null;this.src='https://placehold.co/800x560/e2e8f0/475569?text=證照圖片載入失敗';"
+                            <img src="https://raw.githubusercontent.com/Chimei-Teach/chimei-month-dashboard/main/Gemini-%E5%BB%96%E5%AE%B6%E5%BE%B7.jpg"
+                                 onerror="this.onerror=null;this.src='https://placehold.co/800x560/e2e8f0/475569?text=證照圖片載入失敗';" 
                                  alt="Gemini Certified Educator 證照" class="rounded-lg shadow-md w-full object-contain border">
                         </div>
                         <div class="mt-auto bg-blue-50 text-blue-800 p-4 rounded-lg text-sm w-full">
@@ -557,7 +582,7 @@
             
             let honorRollHtml = `
                 <div id="main-group-榮譽區" class="main-kanban-group bg-white p-4 sm:p-6 rounded-xl border border-slate-200/80">
-                     <div class="p-4 rounded-lg bg-slate-100/80 min-h-[200px]">
+                     <div class="p-4 rounded-lg min-h-[200px]">
                         <div class="prose max-w-none">${chimeiMonthData['榮譽區']}</div>
                      </div>
                 </div>
@@ -940,5 +965,4 @@
     </script>
 </body>
 </html>
-
 
