@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教學部教學成果策略提報表</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
+        .form-group { margin-bottom: 1.5rem; padding: 1rem; border-radius: 0.5rem; }
+        .focus-area { border-left-width: 4px; }
+        .text-area-label { font-size: 0.875rem; color: #4b5563; margin-bottom: 0.5rem; display: block; }
+        /* 避免長文字溢出 */
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* 定義區塊顏色 */
+        .area-blue { border-left-color: #3b82f6; background-color: #eff6ff; } /* 策略定位 */
+        .area-teal { border-left-color: #14b8a6; background-color: #f0fdfa; } /* 量化與行動 */
+        .area-green { border-left-color: #10b981; background-color: #f0fff4; } /* 價值與擴散 */
+        .area-orange { border-left-color: #f97316; background-color: #fff7ed; } /* 向上管理 */
+        
+        /* Modal 樣式 */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 50;
+        }
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(1);
+            transition: transform 0.2s ease-out;
+        }
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+
+        <header class="flex justify-between items-start mb-8 border-b pb-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-blue-900 mb-2">教學成果策略提報表</h1>
+                <p class="text-lg text-gray-600">本表單旨在將「活動清單」轉化為「策略價值論述」，以利 主管 進行高效決策。</p>
+            </div>
+            <button id="openGuideBtn" class="bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-300 transition duration-150 shadow-md flex items-center">
+                <span class="mr-2">📋</span> 填寫說明
+            </button>
+        </header>
+
+        <!-- 主體內容：表單區 (全寬度) -->
+        <div>
+            <form id="strategyReportForm">
+
+                <!-- 區塊一：策略定位與目標對齊 (主管的「為什麼」) -->
+                <div class="form-group area-blue focus-area">
+                    <h2 class="text-xl font-bold text-blue-800 mb-4">區塊一：策略定位與目標對齊 (🎯 務必定義問題)</h2>
+                    
+                    <!-- 1. 業務進度狀態 -->
+                    <label for="projectStatus" class="text-area-label">1. 業務進度狀態 <span class="text-red-500">*</span></label>
+                    <select id="projectStatus" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required>
+                        <option value="">-- 請選擇 --</option>
+                        <option value="已完成 (Completed)">已完成 (Completed)</option>
+                        <option value="進行中 (Ongoing)">進行中 (Ongoing)</option>
+                        <option value="規劃中 (Planned)">規劃中 (Planned)</option>
+                    </select>
+                    
+                    <!-- 2. 負責組別 -->
+                    <label for="responsibleGroup" class="text-area-label">2. 負責組別 <span class="text-red-500">*</span></label>
+                    <input type="text" id="responsibleGroup" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required placeholder="例如：臨床技能中心">
+
+                    <!-- 3. 負責人員 -->
+                    <label for="responsiblePerson" class="text-area-label">3. 負責人員 <span class="text-red-500">*</span></label>
+                    <input type="text" id="responsiblePerson" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required placeholder="例如：英云">
+                    
+                    <!-- 4. 業務主題／策略目標 -->
+                    <label for="strategyGoal" class="text-area-label">4. 業務主題／策略目標 <span class="text-red-500">*</span></label>
+                    <textarea id="strategyGoal" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="請以『業務主題』開頭，簡述其『策略目的』。例如：【11/29 OSCE 考官培訓工作坊】確保考官標準化及專業度，以維護明年國考測驗之公平與品質。"></textarea>
+
+                    <!-- 5. 關鍵挑戰/痛點 -->
+                    <label for="keyChallenge" class="text-area-label mt-4">5. 關鍵挑戰/痛點</label>
+                    <textarea id="keyChallenge" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500" required placeholder="例如：考官庫部分人員資格即將到期，急需透過工作坊完成年度新訓與認證，避免明年測驗人力不足。"></textarea>
+                </div>
+
+                <!-- 區塊二：行動成果與數據量化 (主管的「結果如何」) -->
+                <div class="form-group area-teal focus-area">
+                    <h2 class="text-xl font-bold text-teal-800 mb-4">區塊二：行動成果與數據量化 (📊 必須有數據支持)</h2>
+
+                    <!-- 6. 本次關鍵成果 (量化數據) -->
+                    <label for="keyResults" class="text-area-label">6. 本次關鍵成果 (量化數據) <span class="text-red-500">*</span></label>
+                    <textarea id="keyResults" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" required placeholder="請用數字或具體狀態說明**「已達成」的成果**或**「規劃中」的預期量化目標**。請先選擇上方的「業務進度狀態」以獲得精準的提示。"></textarea>
+
+                    <!-- 7. 行動摘要 (關鍵步驟) -->
+                    <label for="actionSummary" class="text-area-label mt-4">7. 行動摘要 (關鍵步驟)</label>
+                    <textarea id="actionSummary" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="簡述為達成此成果所採取的關鍵步驟，或**規劃中的主要行動里程碑**。請先選擇上方的「業務進度狀態」以獲得精準的提示。"></textarea>
+                    
+                    <!-- 8. 風險/待觀察項目 -->
+                    <label for="riskObservation" class="text-area-label mt-4">8. 風險/待觀察項目</label>
+                    <textarea id="riskObservation" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="例如：部分資深考官對新版評分標準有疑慮，需在工作坊中加強溝通，避免影響測驗執行的一致性。"></textarea>
+                </div>
+
+                <!-- 區塊三：價值擴散與策略提問 (主管的「醫國格局」) -->
+                <div class="form-group area-green focus-area">
+                    <h2 class="text-xl font-bold text-green-800 mb-4">區塊三：價值擴散與策略提問 (🌱 展現系統影響力)</h2>
+
+                    <!-- 9. 系統影響力 (Scalable Value) -->
+                    <label for="systemImpact" class="text-area-label">9. 系統影響力 (Scalable Value) <span class="text-red-500">*</span></label>
+                    <textarea id="systemImpact" class="w-full p-2 border border-green-300 rounded-lg focus:ring-green-500 focus:border-green-500" required placeholder="請寫出這項成果或**預期成果**如何能對其他部門或全院系統產生長期貢獻？例如：考官培訓標準化流程可作為全院各職類（如護理部錦標賽）技能測驗考官培訓的模板，提升跨職類訓練品質的管理。"></textarea>
+                </div>
+
+                <!-- 區塊四：關鍵決策與請示 (需要 AD 指導的關鍵決策) -->
+                <div class="form-group area-orange focus-area">
+                    <h2 class="text-xl font-bold text-orange-800 mb-4">區塊四：關鍵決策與請示 (💡 非必填，請在需要時勾選)</h2>
+
+                    <!-- 是否需要 AD 決策 -->
+                    <label class="inline-flex items-center mb-4">
+                        <input type="checkbox" id="needsDecision" class="form-checkbox h-5 w-5 text-orange-600 rounded">
+                        <span class="ml-2 text-sm font-semibold text-gray-700">此項目需要 **主管** 從高層次角度提供指導或決策。</span>
+                    </label>
+
+                    <!-- 10. 待決策/指導提問 -->
+                    <div id="decisionInputGroup">
+                        <label for="decisionQuestion" class="text-area-label">10. 待**主管**指導提問</label>
+                        <textarea id="decisionQuestion" class="w-full p-2 border border-orange-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" placeholder="請精準列出需要**主管**拍板的策略性問題。例如：考官培訓完成後，是否應考慮增加考官的年度酬勞，以提升其留任意願，確保長期師資穩定？"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-end pt-4 border-t mt-6">
+                    <!-- 提示文字：多項報告可持續新增 -->
+                    <p class="text-sm text-gray-500 mb-2">點擊提交後，表單將會清空，可接著填寫下一份不同的報告。</p>
+                    
+                    <!-- 按鈕文字已改為「提交」 -->
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition duration-150 shadow-lg flex items-center justify-center" id="submitButton">
+                        <span id="submitText">提交</span>
+                        <div id="spinner" class="spinner ml-3"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 輸出結果預覽區塊 (模擬提交後資料呈現) -->
+        <div id="output" class="hidden mt-10 p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">✅ 提報內容預覽 (提交成功)</h2>
+            <pre id="outputContent" class="whitespace-pre-wrap text-sm text-gray-700 bg-white p-4 rounded-lg border"></pre>
+        </div>
+        
+        <!-- 模態框用於替代 alert() -->
+        <div id="custom-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
+                <div id="modal-icon" class="text-5xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full"></div>
+                <h3 id="modal-title" class="text-2xl font-extrabold mb-2">操作提示</h3>
+                <p id="modal-message" class="text-gray-600 mb-6"></p>
+                <button onclick="closeModal()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold">太棒了！</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 填寫說明 Modal 結構 -->
+    <div id="guide-modal" class="modal hidden justify-center items-center">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl transition-all duration-300">
+            <h3 class="text-2xl font-extrabold text-blue-900 border-b pb-3 mb-4">📋 策略報告填寫指南：從任務到價值</h3>
+            <p class="text-sm text-gray-600 mb-6">本指南協助您將日常業務（活動）轉譯為主管關注的「<b>策略影響力</b>」。請務必使用<b>量化數據</b>來證明您的成果。</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- 關鍵轉譯原則 -->
+                <div class="p-4 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
+                    <p class="text-base font-bold text-orange-800 mb-2">❗ 轉譯核心：問自己三個問題</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li><b>Why (策略目的)：</b> 你的工作解決了醫院的哪一個 <b>財務</b>、<b>人力</b> 或 <b>評鑑</b> 痛點？</li>
+                        <li><b>What (量化成果)：</b> 數字上，你的 <b>效率</b>、<b>品質</b> 或 <b>覆蓋率</b> 提升了多少？</li>
+                        <li><b>So What (系統影響)：</b> 你的成功，如何能 <b>複製</b> 給其他部門或 <b>強化全院系統</b>？</li>
+                    </ul>
+                </div>
+                
+                <!-- 狀態說明 -->
+                <div class="p-4 bg-teal-50 border-l-4 border-teal-400 rounded-lg">
+                    <p class="text-base font-bold text-teal-800 mb-2">📊 區塊二：數據填寫依據</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li><b>已完成：</b> 填寫最終達成<b>的實際數據</b>與日期（例如：通過率 <b>100%</b>）。</li>
+                        <li><b>進行中：</b> 填寫累積進度<b>與最新里程碑</b>（例如：已完成 <b>75%</b>；已蒐集 <b>35/50</b> 份）。</li>
+                        <li><b>規劃中：</b> 填寫預期可量化<b>的目標</b>與預計啟動日期（例如：預計錄取 <b>30</b> 人；預計 <b>12/31</b> 提出初稿）。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 單位範例 -->
+            <h4 class="text-xl font-bold text-slate-800 mt-6 mb-4 border-b pb-1">單位範例 (將庶務轉化為價值)</h4>
+
+            <!-- 1. 圖書館 (資源成本效益) -->
+            <div class="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-200">
+                <h5 class="font-bold text-lg text-blue-800 mb-2">📚 範例一：圖書館 (資源成本效益)</h5>
+                <p class="text-xs text-gray-600 italic mb-2">（業務：年度期刊訂購問卷調查、每月教育訓練、JCR 數據下載等）</p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>4. 業務主題／策略目標</b></p>
+                <p class="text-xs text-blue-900 bg-blue-100 p-2 rounded-md mt-1">
+                    <b>主題：</b>【教學與研究資源成本效益優化】 <b>目的：</b> 透過數據分析，確保電子資源的<b>即時性</b>與<b>高成本效益</b>，優化資源配置，支持教學與研究成果。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>6. 關鍵成果 (量化)</b></p>
+                <p class="text-xs text-blue-900 bg-blue-100 p-2 rounded-md mt-1">
+                    <b>進行中：</b> 年度西文期刊續訂問卷調查已完成 <b>95%</b> 回收率。預計能透過使用數據分析，優化 <b>5%</b> 的期刊訂閱成本，<b>節省數十萬經費</b>。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>9. 系統影響力</b></p>
+                <p class="text-xs text-blue-900 bg-blue-100 p-2 rounded-md mt-1">
+                    期刊訂購優化節省的經費可作為<b>跨部門教學軟體採購的資金來源</b>。每月資源訓練（如 DynaMed、JBI）確保新進同仁<b>核心知識資源使用覆蓋率達 100%</b>，強化教學基礎。
+                </p>
+            </div>
+
+            <!-- 2. 視聽中心 (數位效率與品牌行銷) -->
+            <div class="bg-fuchsia-50 p-4 rounded-lg mt-4 border border-fuchsia-200">
+                <h5 class="font-bold text-lg text-fuchsia-800 mb-2">🎬 範例二：視聽中心 (數位效率與品牌行銷)</h5>
+                <p class="text-xs text-gray-600 italic mb-2">（業務：IHF 影片製作、網頁維護、海報輸出、Podcast 後製等）</p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>4. 業務主題／策略目標</b></p>
+                <p class="text-xs text-fuchsia-900 bg-fuchsia-100 p-2 rounded-md mt-1">
+                    <b>主題：</b>【教學成果數位品牌化與時效性專案】 <b>目的：</b> 確保國際級宣傳素材能<b>提前完成高品質交付</b>，提升醫院的<b>敏捷、協作、數位</b>品牌價值。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>6. 關鍵成果 (量化)</b></p>
+                <p class="text-xs text-fuchsia-900 bg-fuchsia-100 p-2 rounded-md mt-1">
+                    <b>已完成：</b> 跨部門合作【奇美醫院抵家】居家醫療影片於金獎微電影展獲<b>金獎</b>，彰顯專業能量。成功將 IHF 宣傳影片<b>提前 3 天交付</b>（9/17 交付），保障國際會議宣傳時程。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>9. 系統影響力</b></p>
+                <p class="text-xs text-fuchsia-900 bg-fuchsia-100 p-2 rounded-md mt-1">
+                    影片獲金獎<b>直接強化醫院在外部競賽中的品牌聲譽</b>。網站與影音內容的即時更新保障學員獲取資源的<b>效率</b>，支持主管推動數位化組織的成果展現。
+                </p>
+            </div>
+
+            <!-- 3. 教學部 (人才招募與培育) -->
+            <div class="bg-amber-50 p-4 rounded-lg mt-4 border border-amber-200">
+                <h5 class="font-bold text-lg text-amber-800 mb-2">🌟 範例三：教學部 (PGY 招募與留任)</h5>
+                <p class="text-xs text-gray-600 italic mb-2">（業務：住院醫師招募、PGY 職涯發展計畫、職前訓練等）</p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>4. 業務主題／策略目標</b></p>
+                <p class="text-xs text-amber-900 bg-amber-100 p-2 rounded-md mt-1">
+                    <b>主題：</b>【PGY 招募策略升級與留任率追蹤】 <b>目的：</b> 將 PGY 招募策略從「簽約獎金」轉向「個人化職涯發展」，以吸引並鎖定<b>高品質、高留任意願</b>的學員。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>6. 關鍵成果 (量化)</b></p>
+                <p class="text-xs text-amber-900 bg-amber-100 p-2 rounded-md mt-1">
+                    <b>已完成：</b> 新進住院醫師職前訓練整體滿意度分數達 <b>96.5 分</b>（超標 1.5 分）。已研擬完成 <b>3 種</b>「個人化職涯發展計畫與協助」方案。
+                </p>
+
+                <p class="text-sm font-semibold text-gray-700 mt-3">✅ <b>9. 系統影響力</b></p>
+                <p class="text-xs text-amber-900 bg-amber-100 p-2 rounded-md mt-1">
+                    提升職前訓練與個人化方案，預期可<b>提高 PGY 留任率 10%</b>，從而<b>降低</b>未來住院醫師的<b>招募與訓練成本</b>，確保整體臨床人力穩定。
+                </p>
+            </div>
+
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeGuideModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-150">關閉說明</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 設定 Apps Script Web App URL
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQvTbjwSKS-UgZN4ZYEhRiNb5M5LPf5rIfpqy_ihVzlwpefW7D24ifECgBmbXa-XS6UQ/exec"; // **已替換為您提供的網址**
+
+        // 模態框控制
+        function showModal(title, message, isError = false) {
+            const titleEl = document.getElementById('modal-title');
+            const iconEl = document.getElementById('modal-icon');
+            const buttonEl = document.querySelector('#custom-modal button');
+            
+            // 設定標題和樣式
+            titleEl.textContent = title;
+            document.getElementById('modal-message').textContent = message;
+
+            if (isError) {
+                // 錯誤/警告樣式
+                titleEl.className = 'text-2xl font-extrabold mb-2 text-red-600';
+                iconEl.innerHTML = '❌';
+                iconEl.className = 'text-5xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-red-100';
+                buttonEl.textContent = '確定 (檢查錯誤)';
+            } else {
+                // 成功/活潑樣式 (已完成提交)
+                titleEl.className = 'text-2xl font-extrabold mb-2 text-green-700';
+                iconEl.innerHTML = '✅'; // 使用勾勾
+                iconEl.className = 'text-5xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-green-100';
+                buttonEl.textContent = '太棒了！';
+            }
+
+            document.getElementById('custom-modal').classList.remove('hidden');
+            document.getElementById('custom-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+            document.getElementById('custom-modal').classList.remove('flex');
+        }
+
+        // Guide Modal 控制
+        document.getElementById('openGuideBtn').addEventListener('click', function() {
+            document.getElementById('guide-modal').classList.remove('hidden');
+            document.getElementById('guide-modal').classList.add('flex');
+        });
+
+        function closeGuideModal() {
+            document.getElementById('guide-modal').classList.add('hidden');
+            document.getElementById('guide-modal').classList.remove('flex');
+        }
+        
+        // --- 動態更新提示文字的函數 ---
+        document.getElementById('projectStatus').addEventListener('change', updatePlaceholders);
+        document.addEventListener('DOMContentLoaded', updatePlaceholders); // 初始化時執行一次
+
+        function updatePlaceholders() {
+            const status = document.getElementById('projectStatus').value;
+            const keyResultsEl = document.getElementById('keyResults');
+            const actionSummaryEl = document.getElementById('actionSummary');
+
+            let newKeyResultsPlaceholder = "請用數字或具體狀態說明「已達成」的成果或「規劃中」的預期量化目標。請先選擇上方的「業務進度狀態」以獲得精準的提示。";
+            let newActionPlaceholder = "簡述為達成此成果所採取的關鍵步驟，或「規劃中的主要行動里程碑」。請先選擇上方的「業務進度狀態」以獲得精準的提示。";
+
+            if (status.includes('已完成')) {
+                newKeyResultsPlaceholder = "請填寫最終達成的量化成果與實際數據。務必註明達成日期。 例如：已完成 25 位考官的新訓與認證 (11/29完成)，達成年度目標的 100%。";
+                newActionPlaceholder = "請簡述工作坊籌備、執行、測驗與最終認證的流程優化點。請註明主要行動的完成日期。";
+            } else if (status.includes('進行中')) {
+                newKeyResultsPlaceholder = "請填寫目前累積的量化進度數據和中途里程碑。例如：目前已完成 11/29 工作坊課程設計 (10/10完成)，報名人數 23/25，達成 92%。";
+                newActionPlaceholder = "請簡述本期最新完成的里程碑與下一步的行動。例如：已於 10/15 完成報名截止與課程通知，下一步是 10/20 追蹤未報名考官並進行個人聯繫。";
+            } else if (status.includes('規劃中')) {
+                newKeyResultsPlaceholder = "請填寫預期可量化的最終目標或準備階段的關鍵數據。務必註明預計完成日期。 例如：預期產出：新訓或認證 25 位合格考官 (預計 11/30 完成認證申請)。";
+                newActionPlaceholder = "請簡述詳細的前置作業時程與資源準備。例如：詳細的前置作業時程：11/15 報名截止；11/20 教材整備；11/29 工作坊舉辦。";
+            }
+            
+            keyResultsEl.placeholder = newKeyResultsPlaceholder;
+            actionSummaryEl.placeholder = newActionPlaceholder;
+        }
+        // --- 動態更新提示文字的函數結束 ---
+
+        // 隱藏/顯示決策提問欄位
+        document.getElementById('needsDecision').addEventListener('change', function() {
+            const decisionGroup = document.getElementById('decisionInputGroup');
+            if (this.checked) {
+                decisionGroup.style.display = 'block';
+                document.getElementById('decisionQuestion').required = true;
+            } else {
+                decisionGroup.style.display = 'none';
+                document.getElementById('decisionQuestion').required = false;
+            }
+        });
+
+        // --- 提交表單到 Apps Script 的核心函數 ---
+        async function submitFormToSheet(e) {
+            e.preventDefault();
+
+            // 顯示 Loading 狀態
+            const submitButton = document.getElementById('submitButton');
+            const submitText = document.getElementById('submitText');
+            const spinner = document.getElementById('spinner');
+            submitButton.disabled = true;
+            submitText.textContent = '傳輸中...';
+            spinner.style.display = 'block';
+
+            // 收集表單數據 (必須與 Apps Script 的 rowData 順序和名稱匹配)
+            const data = {
+                projectStatus: document.getElementById('projectStatus').value, 
+                responsibleGroup: document.getElementById('responsibleGroup').value,
+                responsiblePerson: document.getElementById('responsiblePerson').value,
+                strategyGoal: document.getElementById('strategyGoal').value,
+                keyChallenge: document.getElementById('keyChallenge').value,
+                keyResults: document.getElementById('keyResults').value,
+                actionSummary: document.getElementById('actionSummary').value,
+                riskObservation: document.getElementById('riskObservation').value,
+                systemImpact: document.getElementById('systemImpact').value,
+                needsDecision: document.getElementById('needsDecision').checked, // boolean
+                decisionQuestion: document.getElementById('needsDecision').checked ? document.getElementById('decisionQuestion').value : '無',
+            };
+
+            if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE" || !WEB_APP_URL) {
+                showModal("錯誤", "Apps Script Web App URL 設定錯誤，無法提交資料。", true);
+                // 恢復 Loading 狀態
+                submitButton.disabled = false;
+                submitText.textContent = '提交';
+                spinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                // 使用 fetch 提交資料
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                    mode: 'no-cors' 
+                });
+
+                // 成功發送請求即視為成功
+                // 修正後的訊息
+                showModal("✨ 策略報告已完成提交！", "您的報告已安全送達。如有下一項業務或議題，請直接繼續填寫即可！", false);
+
+                // 模擬預覽，即使 Apps Script 成功，前端也保留預覽功能
+                const formattedOutput = `
+            -------------------------------------------------
+            📋 報表核心資訊 (對齊表單 1-3 號欄位)
+            -------------------------------------------------
+            1. 業務進度狀態：${data.projectStatus}
+            2. 負責組別：${data.responsibleGroup}
+            3. 負責人員：${data.responsiblePerson}
+
+            -------------------------------------------------
+            📌 區塊一：策略定位與目標對齊 (主管的 WHY)
+            -------------------------------------------------
+            4. 業務主題／策略目標：${data.strategyGoal}
+            5. 關鍵挑戰/痛點：${data.keyChallenge}
+
+            -------------------------------------------------
+            📈 區塊二：行動成果與數據量化 (主管的 WHAT & HOW)
+            -------------------------------------------------
+            6. 本次關鍵成果 (量化)：${data.keyResults}
+            7. 行動摘要 (關鍵步驟)：${data.actionSummary}
+            8. 風險/待觀察項目：${data.riskObservation}
+
+            -------------------------------------------------
+            🌱 區塊三：價值擴散與系統影響力 (主管的 SO WHAT)
+            -------------------------------------------------
+            9. 系統影響力：${data.systemImpact}
+
+            -------------------------------------------------
+            💡 區塊四：關鍵決策與請示 (待 主管 拍板)
+            -------------------------------------------------
+            10. 是否需要主管決策：${data.needsDecision ? '是' : '否'}
+            11. 待主管指導提問：${data.decisionQuestion}
+            `;
+                document.getElementById('outputContent').textContent = formattedOutput;
+                document.getElementById('output').classList.remove('hidden');
+
+                // 提交並自動重置表單
+                document.getElementById('strategyReportForm').reset();
+                updatePlaceholders();
+                document.getElementById('decisionInputGroup').style.display = 'none';
+
+            } catch (error) {
+                console.error('Submission Error:', error);
+                showModal("錯誤", "資料提交失敗，請檢查網路或 Apps Script 部署狀態。", true);
+            } finally {
+                // 恢復 Loading 狀態
+                submitButton.disabled = false;
+                submitText.textContent = '提交';
+                spinner.style.display = 'none';
+                setTimeout(() => {
+                    document.getElementById('output').classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        document.getElementById('strategyReportForm').addEventListener('submit', submitFormToSheet);
+
+        // 初始化時隱藏決策提問
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('decisionInputGroup').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
