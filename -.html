@@ -320,8 +320,9 @@
                         needsDecision: row["是否需主管決策"] || "否",
                         decisionQuestion: row["待主管指導提問"] || "",
                         challenge: row["關鍵挑戰/痛點"] || "",
+                        riskObservation: row["風險/待觀察項目"] || "", // <-- MODIFIED: Added this line
                         impact: row["系統影響力 (價值擴散)"] || "",
-                        actionSummary: row["行動摘要 (關鍵步驟)"] || "" // <--- ADDED
+                        actionSummary: row["行動摘要 (關鍵步驟)"] || ""
                     }
                 };
             }).filter(Boolean); 
@@ -514,6 +515,7 @@
                         <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                            ${createDetailSection('📊 行動摘要 (關鍵步驟)', d.actionSummary)}
                            ${createDetailSection('💡 關鍵挑戰/痛點', d.challenge)}
+                           ${createDetailSection('⚠️ 風險/待觀察項目', d.riskObservation)}
                            ${createDetailSection('🚀 系統影響力', d.impact)}
                         </div>
                         <div class="bg-green-50 p-4 rounded-lg border border-green-200 flex flex-col justify-center items-center h-full">
@@ -675,4 +677,3 @@
     </script>
 </body>
 </html>
-
