@@ -54,8 +54,8 @@
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em; padding-right: 2.5rem;
         }
-        /* AI 分析報告樣式 */
-        #ai-analysis-content h3 {
+        /* AI 內容樣式 */
+        .ai-content h3 {
             font-size: 1.125rem;
             font-weight: 700;
             color: #1e3a8a;
@@ -64,13 +64,16 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #e2e8f0;
         }
-        #ai-analysis-content ul {
+        .ai-content ul {
             list-style-type: disc;
             padding-left: 1.5rem;
             margin-bottom: 1rem;
             color: #334155;
         }
-         #ai-analysis-content li { margin-bottom: 0.5rem; }
+         .ai-content li { margin-bottom: 0.5rem; }
+         .ai-content h3:first-child {
+            margin-top: 0;
+         }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -94,6 +97,11 @@
                 <div class="flex flex-col sm:flex-row items-stretch gap-2 w-full md:w-auto">
                     <select id="group-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
                     <select id="person-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
+                    <!-- NEW: AI 會議重點按鈕 -->
+                    <button id="ai-summary-btn" class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003.586 15h12.828a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                        <span>AI 會議重點</span>
+                    </button>
                     <button id="ai-analysis-btn" class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
                         <span>AI 策略分析</span>
@@ -150,15 +158,38 @@
                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="ai-modal-content" class="p-6 overflow-y-auto">
+            <div class="p-6 overflow-y-auto">
                 <div id="ai-analysis-spinner" class="flex flex-col items-center justify-center text-center h-64">
                     <div class="spinner"></div>
                     <p class="mt-4 text-slate-600 font-semibold">AI 正在深度分析報告，請稍候...</p>
                 </div>
-                <div id="ai-analysis-content" class="prose max-w-none hidden"></div>
+                <div id="ai-analysis-content" class="ai-content prose max-w-none hidden"></div>
             </div>
         </div>
     </div>
+    
+    <!-- NEW: AI Summary Modal -->
+    <div id="summary-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003.586 15h12.828a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                    AI 會議重點彙整
+                </h2>
+                <button id="summary-modal-close" class="text-slate-400 hover:text-slate-700">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div id="ai-summary-spinner" class="flex flex-col items-center justify-center text-center h-64">
+                    <div class="spinner" style="border-left-color: #16a34a;"></div>
+                    <p class="mt-4 text-slate-600 font-semibold">AI 正在快速彙整會議重點，請稍候...</p>
+                </div>
+                <div id="ai-summary-content" class="ai-content prose max-w-none hidden"></div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQvTbjwSKS-UgZN4ZYEhRiNb5M5LPf5rIfpqy_ihVzlwpefW7D24ifECgBmbXa-XS6UQ/exec";
@@ -236,7 +267,7 @@
             populateFilters(reports);
             setupFilterListeners();
             setupModalListeners();
-            setupAIButtonListener();
+            setupAIButtonListeners(); // MODIFIED: Renamed function for clarity
             renderDashboard();
         }
 
@@ -320,7 +351,7 @@
                         needsDecision: row["是否需主管決策"] || "否",
                         decisionQuestion: row["待主管指導提問"] || "",
                         challenge: row["關鍵挑戰/痛點"] || "",
-                        riskObservation: row["風險/待觀察項目"] || "", // <-- MODIFIED: Added this line
+                        riskObservation: row["風險/待觀察項目"] || "",
                         impact: row["系統影響力 (價值擴散)"] || "",
                         actionSummary: row["行動摘要 (關鍵步驟)"] || ""
                     }
@@ -571,15 +602,20 @@
 
         // --- Modal Functions ---
         function setupModalListeners() {
+            // Metric Modal
             const metricModal = document.getElementById('metric-modal');
-            const metricCloseBtn = document.getElementById('modal-close');
+            document.getElementById('modal-close').addEventListener('click', closeMetricModal);
             metricModal.addEventListener('click', (e) => { if (e.target.id === 'metric-modal') closeMetricModal(); });
-            metricCloseBtn.addEventListener('click', closeMetricModal);
-
+            
+            // AI Analysis Modal
             const aiModal = document.getElementById('ai-modal');
-            const aiCloseBtn = document.getElementById('ai-modal-close');
+            document.getElementById('ai-modal-close').addEventListener('click', closeAIModal);
             aiModal.addEventListener('click', (e) => { if (e.target.id === 'ai-modal') closeAIModal(); });
-            aiCloseBtn.addEventListener('click', closeAIModal);
+
+            // NEW: AI Summary Modal
+            const summaryModal = document.getElementById('summary-modal');
+            document.getElementById('summary-modal-close').addEventListener('click', closeSummaryModal);
+            summaryModal.addEventListener('click', (e) => { if (e.target.id === 'summary-modal') closeSummaryModal(); });
         }
 
         function showMetricModal(metricType) {
@@ -615,29 +651,29 @@
         }
 
         function closeMetricModal() {
-            const modal = document.getElementById('metric-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            document.getElementById('metric-modal').classList.add('hidden');
         }
 
-        // --- AI Analysis Functions ---
-        function setupAIButtonListener() {
+        // --- AI Functions ---
+        function setupAIButtonListeners() {
             document.getElementById('ai-analysis-btn').addEventListener('click', handleAIAnalysisRequest);
+            document.getElementById('ai-summary-btn').addEventListener('click', handleAISummaryRequest); // NEW
         }
-
-        async function handleAIAnalysisRequest() {
-            const aiModal = document.getElementById('ai-modal');
-            const spinner = document.getElementById('ai-analysis-spinner');
-            const contentDiv = document.getElementById('ai-analysis-content');
+        
+        // Generic function to handle AI requests
+        async function handleAIRequest(action, modalId, spinnerId, contentId) {
+            const modal = document.getElementById(modalId);
+            const spinner = document.getElementById(spinnerId);
+            const contentDiv = document.getElementById(contentId);
             
-            aiModal.classList.remove('hidden');
-            aiModal.classList.add('flex');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             spinner.style.display = 'flex';
             contentDiv.classList.add('hidden');
             contentDiv.innerHTML = '';
 
-            const reportsToAnalyze = getFilteredReports();
-            if (reportsToAnalyze.length === 0) {
+            const reportsToProcess = getFilteredReports();
+            if (reportsToProcess.length === 0) {
                 contentDiv.innerHTML = `<p class="text-slate-600 text-center">沒有可供分析的報告。</p>`;
                 spinner.style.display = 'none';
                 contentDiv.classList.remove('hidden');
@@ -647,8 +683,8 @@
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'analyze', reports: reportsToAnalyze })
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: action, reports: reportsToProcess })
                 });
 
                 if (!response.ok) throw new Error(`AI 伺服器回應錯誤: ${response.status}`);
@@ -656,24 +692,37 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    contentDiv.innerHTML = marked.parse(result.analysis);
+                    // Use marked.parse to convert Markdown to HTML
+                    contentDiv.innerHTML = marked.parse(result.analysis || result.summary);
                 } else {
-                    throw new Error(result.message || 'AI 分析失敗');
+                    throw new Error(result.message || 'AI 處理失敗');
                 }
             } catch (error) {
-                contentDiv.innerHTML = `<p class="text-red-600 text-center">分析時發生錯誤：<br>${error.message}</p>`;
+                contentDiv.innerHTML = `<p class="text-red-600 text-center">處理時發生錯誤：<br>${error.message}</p>`;
             } finally {
                 spinner.style.display = 'none';
                 contentDiv.classList.remove('hidden');
             }
         }
+        
+        // Specific handlers for each button
+        function handleAIAnalysisRequest() {
+            handleAIRequest('analyze', 'ai-modal', 'ai-analysis-spinner', 'ai-analysis-content');
+        }
+
+        function handleAISummaryRequest() { // NEW
+            handleAIRequest('summarize', 'summary-modal', 'ai-summary-spinner', 'ai-summary-content');
+        }
 
         function closeAIModal() {
-            const modal = document.getElementById('ai-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            document.getElementById('ai-modal').classList.add('hidden');
+        }
+        
+        function closeSummaryModal() { // NEW
+            document.getElementById('summary-modal').classList.add('hidden');
         }
 
     </script>
 </body>
 </html>
+
