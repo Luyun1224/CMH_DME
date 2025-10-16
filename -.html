@@ -413,7 +413,24 @@
         }
         
         function extractAndVisualizeData(text, actionSummary) {
-            let match = text.match(/(?:\s|^)(\d+)\s*\/\s*(\d+)(?:\s|$)/);
+            let match = text.match(/總\w*數(\d+)\s*篇/);
+            if (match) {
+                const total = match[1];
+                let increaseHtml = '';
+                const increaseMatch = text.match(/(?:較|提升)(\d+)\s*篇/);
+                if (increaseMatch) {
+                    increaseHtml = `<div class="flex items-center gap-1 text-green-600 font-semibold mt-1">
+                                      <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12 7a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 100 2h8a1 1 0 100-2H8z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.002-3.998a1 1 0 001.932-.518l.849-4.242a1 1 0 00-.316-1.032l-4.242-.849a1 1 0 00-1.033.316l-.518 1.932a1 1 0 001.384 1.383l4-2zm-3.21.316a1 1 0 001.384-1.383l-4 2a1 1 0 00-.518 1.932l1.932.518a1 1 0 001.032-.316l.849-4.242z" clip-rule="evenodd" />
+                                       </svg>
+                                      <span>(較往年提升${increaseMatch[1]}篇)</span>
+                                    </div>`;
+                }
+                return `<div class="text-center w-full"><p class="text-sm text-slate-600">總投稿篇數</p><p class="text-6xl font-extrabold text-blue-800 my-2">${total}<span class="text-2xl font-semibold text-slate-500 ml-2">篇</span></p>${increaseHtml}</div>`;
+            }
+
+            match = text.match(/(?:\s|^)(\d+)\s*\/\s*(\d+)(?:\s|$)/);
             if (match) {
                 const value = parseInt(match[1]), max = parseInt(match[2]);
                 const percentage = max > 0 ? (value / max * 100) : 0;
@@ -444,7 +461,7 @@
         }
         
         const getTimelineDates = (actionSummary) => {
-            const dateRegex = /(\d{1,2})\/(\d{1,2})/g;
+            const dateRegex = /(\d{1,2})\/\d{1,2}/g;
             let dates = [];
             let match;
             while ((match = dateRegex.exec(actionSummary)) !== null) {
@@ -463,15 +480,15 @@
             return (elapsed / totalDuration) * 100;
         };
 
-
         function createTimeline(actionSummary) {
             if (!actionSummary || actionSummary.trim() === '') return '';
-            const steps = actionSummary.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?)[：:]\s*([^※\n]+)/g);
+            const steps = actionSummary.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底))\s*([^※\n]+)/g);
+
             if (!steps || steps.length === 0) {
                  return `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(actionSummary)}</div>`;
             }
             const timelineHtml = steps.map((step, index) => {
-                const parts = step.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?)[：:]\s*([^※\n]+)/);
+                const parts = step.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底))\s*([^※\n]+)/);
                 const date = parts[1];
                 const task = parts[2].trim();
                 const isLast = index === steps.length - 1;
@@ -487,7 +504,9 @@
             if (isTimeline) {
                 contentHtml = createTimeline(content);
             } else {
-                let summary = content.trim();
+                 // 確保點列式內容會被 marked.js 正確解析
+                let processedContent = content.trim().replace(/(\d\.)\s/g, '\n$1 ');
+                let summary = processedContent;
                 const maxLength = 90; 
                 if (summary.length > maxLength) {
                     const firstSentenceEnd = summary.search(/[。！？]/);
@@ -503,7 +522,6 @@
             return `<div class="flex items-start gap-3"><div class="flex-shrink-0 text-slate-500 mt-1">${iconSvg}</div><div class="flex-grow"><p class="font-bold text-slate-800 text-base">${title}</p><div class="mt-2">${contentHtml}</div></div></div>`;
         }
 
-        // --- 【修改處】恢復負責人格式 & 新增策略目標區塊 ---
         function renderProjectCard(report) {
             const d = report.details;
             const statusMap = {1: { text: '規劃中', class: 'status-planned' }, 2: { text: '進行中', class: 'status-ongoing' }, 3: { text: '已完成', class: 'status-completed' }};
