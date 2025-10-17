@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>教學部教學成果策略提報表</title>
-    <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
@@ -62,15 +61,12 @@
             </button>
         </header>
 
-        <!-- 主體內容：表單區 (全寬度) -->
         <div>
             <form id="strategyReportForm">
 
-                <!-- 區塊一：策略定位與目標對齊 (主管的「為什麼」) -->
                 <div class="form-group area-blue focus-area">
                     <h2 class="text-xl font-bold text-blue-800 mb-4">區塊一：策略定位與目標對齊 (🎯 務必定義問題)</h2>
                     
-                    <!-- 1. 業務進度狀態 -->
                     <label for="projectStatus" class="text-area-label">1. 業務進度狀態 <span class="text-red-500">*</span></label>
                     <select id="projectStatus" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required>
                         <option value="">-- 請選擇 --</option>
@@ -79,60 +75,47 @@
                         <option value="規劃中 (Planned)">規劃中 (Planned)</option>
                     </select>
                     
-                    <!-- 2. 負責組別 -->
                     <label for="responsibleGroup" class="text-area-label">2. 負責組別 <span class="text-red-500">*</span></label>
                     <input type="text" id="responsibleGroup" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required placeholder="例如：臨床技能中心">
 
-                    <!-- 3. 負責人員 -->
                     <label for="responsiblePerson" class="text-area-label">3. 負責人員 <span class="text-red-500">*</span></label>
                     <input type="text" id="responsiblePerson" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" required placeholder="例如：英云">
                     
-                    <!-- 4. 業務主題／策略目標 -->
                     <label for="strategyGoal" class="text-area-label">4. 業務主題／策略目標 <span class="text-red-500">*</span></label>
                     <textarea id="strategyGoal" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required placeholder="請以『業務主題』開頭，簡述其『策略目的』。例如：【11/29 OSCE 考官培訓工作坊】確保考官標準化及專業度，以維護明年國考測驗之公平與品質。"></textarea>
 
-                    <!-- 5. 關鍵挑戰/痛點 -->
                     <label for="keyChallenge" class="text-area-label mt-4">5. 關鍵挑戰/痛點</label>
                     <textarea id="keyChallenge" class="w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500" required placeholder="例如：考官庫部分人員資格即將到期，急需透過工作坊完成年度新訓與認證，避免明年測驗人力不足。"></textarea>
                 </div>
 
-                <!-- 區塊二：行動成果與數據量化 (主管的「結果如何」) -->
                 <div class="form-group area-teal focus-area">
                     <h2 class="text-xl font-bold text-teal-800 mb-4">區塊二：行動成果與數據量化 (📊 必須有數據支持)</h2>
 
-                    <!-- 6. 本次關鍵成果 (量化數據) -->
                     <label for="keyResults" class="text-area-label">6. 本次關鍵成果 (量化數據) <span class="text-red-500">*</span></label>
                     <textarea id="keyResults" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" required placeholder="請用數字或具體狀態說明**「已達成」的成果**或**「規劃中」的預期量化目標**。請先選擇上方的「業務進度狀態」以獲得精準的提示。"></textarea>
 
-                    <!-- 7. 行動摘要 (關鍵步驟) -->
                     <label for="actionSummary" class="text-area-label mt-4">7. 行動摘要 (關鍵步驟)</label>
                     <textarea id="actionSummary" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="簡述為達成此成果所採取的關鍵步驟，或**規劃中的主要行動里程碑**。請先選擇上方的「業務進度狀態」以獲得精準的提示。"></textarea>
                     
-                    <!-- 8. 風險/待觀察項目 -->
                     <label for="riskObservation" class="text-area-label mt-4">8. 風險/待觀察項目</label>
                     <textarea id="riskObservation" class="w-full p-2 border border-teal-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="例如：部分資深考官對新版評分標準有疑慮，需在工作坊中加強溝通，避免影響測驗執行的一致性。"></textarea>
                 </div>
 
-                <!-- 區塊三：價值擴散與策略提問 (主管的「醫國格局」) -->
                 <div class="form-group area-green focus-area">
                     <h2 class="text-xl font-bold text-green-800 mb-4">區塊三：價值擴散與策略提問 (🌱 展現系統影響力)</h2>
 
-                    <!-- 9. 系統影響力 (Scalable Value) -->
                     <label for="systemImpact" class="text-area-label">9. 系統影響力 (Scalable Value) <span class="text-red-500">*</span></label>
                     <textarea id="systemImpact" class="w-full p-2 border border-green-300 rounded-lg focus:ring-green-500 focus:border-green-500" required placeholder="請寫出這項成果或**預期成果**如何能對其他部門或全院系統產生長期貢獻？例如：考官培訓標準化流程可作為全院各職類（如護理部錦標賽）技能測驗考官培訓的模板，提升跨職類訓練品質的管理。"></textarea>
                 </div>
 
-                <!-- 區塊四：關鍵決策與請示 (需要 AD 指導的關鍵決策) -->
                 <div class="form-group area-orange focus-area">
                     <h2 class="text-xl font-bold text-orange-800 mb-4">區塊四：關鍵決策與請示 (💡 非必填，請在需要時勾選)</h2>
 
-                    <!-- 是否需要 AD 決策 -->
                     <label class="inline-flex items-center mb-4">
                         <input type="checkbox" id="needsDecision" class="form-checkbox h-5 w-5 text-orange-600 rounded">
                         <span class="ml-2 text-sm font-semibold text-gray-700">此項目需要 **主管** 從高層次角度提供指導或決策。</span>
                     </label>
 
-                    <!-- 10. 待決策/指導提問 -->
                     <div id="decisionInputGroup">
                         <label for="decisionQuestion" class="text-area-label">10. 待**主管**指導提問</label>
                         <textarea id="decisionQuestion" class="w-full p-2 border border-orange-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" placeholder="請精準列出需要**主管**拍板的策略性問題。例如：考官培訓完成後，是否應考慮增加考官的年度酬勞，以提升其留任意願，確保長期師資穩定？"></textarea>
@@ -140,10 +123,8 @@
                 </div>
 
                 <div class="flex flex-col items-end pt-4 border-t mt-6">
-                    <!-- 提示文字：多項報告可持續新增 -->
                     <p class="text-sm text-gray-500 mb-2">點擊提交後，表單將會清空，可接著填寫下一份不同的報告。</p>
                     
-                    <!-- 按鈕文字已改為「提交」 -->
                     <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition duration-150 shadow-lg flex items-center justify-center" id="submitButton">
                         <span id="submitText">提交</span>
                         <div id="spinner" class="spinner ml-3"></div>
@@ -152,13 +133,11 @@
             </form>
         </div>
         
-        <!-- 輸出結果預覽區塊 (模擬提交後資料呈現) -->
         <div id="output" class="hidden mt-10 p-6 bg-gray-50 rounded-xl border border-gray-200">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">✅ 提報內容預覽 (提交成功)</h2>
             <pre id="outputContent" class="whitespace-pre-wrap text-sm text-gray-700 bg-white p-4 rounded-lg border"></pre>
         </div>
         
-        <!-- 模態框用於替代 alert() -->
         <div id="custom-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4">
             <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
                 <div id="modal-icon" class="text-5xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full"></div>
@@ -170,14 +149,12 @@
 
     </div>
 
-    <!-- 填寫說明 Modal 結構 -->
     <div id="guide-modal" class="modal hidden justify-center items-center">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl transition-all duration-300">
             <h3 class="text-2xl font-extrabold text-blue-900 border-b pb-3 mb-4">📋 策略報告填寫指南：從任務到價值</h3>
             <p class="text-sm text-gray-600 mb-6">本指南協助您將日常業務（活動）轉譯為主管關注的「<b>策略影響力</b>」。請務必使用<b>量化數據</b>來證明您的成果。</p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- 關鍵轉譯原則 -->
                 <div class="p-4 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
                     <p class="text-base font-bold text-orange-800 mb-2">❗ 轉譯核心：問自己三個問題</p>
                     <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
@@ -187,7 +164,6 @@
                     </ul>
                 </div>
                 
-                <!-- 狀態說明 -->
                 <div class="p-4 bg-teal-50 border-l-4 border-teal-400 rounded-lg">
                     <p class="text-base font-bold text-teal-800 mb-2">📊 區塊二：數據填寫依據</p>
                     <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
@@ -198,10 +174,8 @@
                 </div>
             </div>
 
-            <!-- 單位範例 -->
             <h4 class="text-xl font-bold text-slate-800 mt-6 mb-4 border-b pb-1">單位範例 (將庶務轉化為價值)</h4>
 
-            <!-- 1. 圖書館 (資源成本效益) -->
             <div class="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-200">
                 <h5 class="font-bold text-lg text-blue-800 mb-2">📚 範例一：圖書館 (資源成本效益)</h5>
                 <p class="text-xs text-gray-600 italic mb-2">（業務：年度期刊訂購問卷調查、每月教育訓練、JCR 數據下載等）</p>
@@ -222,7 +196,6 @@
                 </p>
             </div>
 
-            <!-- 2. 視聽中心 (數位效率與品牌行銷) -->
             <div class="bg-fuchsia-50 p-4 rounded-lg mt-4 border border-fuchsia-200">
                 <h5 class="font-bold text-lg text-fuchsia-800 mb-2">🎬 範例二：視聽中心 (數位效率與品牌行銷)</h5>
                 <p class="text-xs text-gray-600 italic mb-2">（業務：IHF 影片製作、網頁維護、海報輸出、Podcast 後製等）</p>
@@ -243,7 +216,6 @@
                 </p>
             </div>
 
-            <!-- 3. 教學部 (人才招募與培育) -->
             <div class="bg-amber-50 p-4 rounded-lg mt-4 border border-amber-200">
                 <h5 class="font-bold text-lg text-amber-800 mb-2">🌟 範例三：教學部 (PGY 招募與留任)</h5>
                 <p class="text-xs text-gray-600 italic mb-2">（業務：住院醫師招募、PGY 職涯發展計畫、職前訓練等）</p>
