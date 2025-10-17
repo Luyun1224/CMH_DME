@@ -75,11 +75,13 @@
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
+    <!-- 讀取遮罩 -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-100/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
         <div class="spinner"></div>
         <p class="mt-4 text-slate-600 font-semibold text-lg">正在從 Google Sheet 載入報告...</p>
     </div>
 
+    <!-- 主儀表板容器 -->
     <div id="dashboard-container" class="max-w-screen-xl mx-auto" style="visibility: hidden;">
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start gap-4">
@@ -95,21 +97,15 @@
                 <div class="flex flex-col sm:flex-row items-stretch gap-2 w-full md:w-auto">
                     <select id="group-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
                     <select id="person-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
-                    <button id="ai-summary-btn" class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003.586 15h12.828a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
-                        <span>AI 會議重點</span>
-                    </button>
-                    <button id="ai-analysis-btn" class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                        <span>AI 策略分析</span>
-                    </button>
                 </div>
             </div>
             <p id="last-updated" class="text-sm text-slate-400 mt-2 text-right"></p>
         </header>
 
+        <!-- 關鍵指標區塊 -->
         <div id="key-metrics-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"></div>
         
+        <!-- 共同挑戰區塊 -->
         <div class="mb-12">
             <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2m6-4v2m-6-2v2m6 4v2m-6-2v2" /></svg>
@@ -119,17 +115,21 @@
              </div>
         </div>
 
+        <!-- 亮點專案區塊 -->
         <div class="mb-12">
             <h2 class="section-title mb-6">策略成果回饋：驅動系統進化的亮點專案</h2>
             <div id="highlight-projects-container" class="grid grid-cols-1 lg:grid-cols-1 gap-6"></div>
         </div>
+
+        <!-- 待決策事項區塊 -->
         <div>
             <h2 class="section-title mb-6">向上管理：需要部長決策或高層指導的關鍵議題</h2>
             <div id="decision-items-container" class="space-y-6"></div>
         </div>
     </div>
 
-    <!-- Modals (structure unchanged) -->
+    <!-- 彈出視窗 (Modals) -->
+    <!-- 指標詳情視窗 -->
     <div id="metric-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center p-5 border-b">
@@ -141,54 +141,16 @@
             <div id="modal-content" class="p-6 overflow-y-auto space-y-4"></div>
         </div>
     </div>
-    <div id="ai-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-5 border-b">
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                    AI 策略分析報告
-                </h2>
-                <button id="ai-modal-close" class="text-slate-400 hover:text-slate-700">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <div id="ai-analysis-spinner" class="flex flex-col items-center justify-center text-center h-64">
-                    <div class="spinner"></div>
-                    <p class="mt-4 text-slate-600 font-semibold">AI 正在深度分析報告，請稍候...</p>
-                </div>
-                <div id="ai-analysis-content" class="ai-content prose max-w-none hidden"></div>
-            </div>
-        </div>
-    </div>
-    <div id="summary-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-5 border-b">
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003.586 15h12.828a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
-                    AI 會議重點彙整
-                </h2>
-                <button id="summary-modal-close" class="text-slate-400 hover:text-slate-700">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <div id="ai-summary-spinner" class="flex flex-col items-center justify-center text-center h-64">
-                    <div class="spinner" style="border-left-color: #16a34a;"></div>
-                    <p class="mt-4 text-slate-600 font-semibold">AI 正在快速彙整會議重點，請稍候...</p>
-                </div>
-                <div id="ai-summary-content" class="ai-content prose max-w-none hidden"></div>
-            </div>
-        </div>
-    </div>
-
 
     <script>
+        // --- 設定 ---
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQvTbjwSKS-UgZN4ZYEhRiNb5M5LPf5rIfpqy_ihVzlwpefW7D24ifECgBmbXa-XS6UQ/exec";
         
+        // --- 全域變數 ---
         let allReports = [];
         let currentFilters = { group: 'all', person: 'all' };
 
+        // --- 初始化 ---
         document.addEventListener('DOMContentLoaded', async () => {
             let hasError = false;
             const controller = new AbortController();
@@ -244,10 +206,10 @@
             populateFilters(reports);
             setupFilterListeners();
             setupModalListeners();
-            setupAIButtonListeners();
             renderDashboard();
         }
 
+        // --- 核心渲染与筛选逻辑 ---
         function renderDashboard() {
             let filteredReports = getFilteredReports();
             renderKeyMetrics(calculateKeyMetrics(filteredReports));
@@ -305,6 +267,7 @@
             personFilter.value = 'all';
         }
         
+        // --- 资料处理 ---
         function transformData(sheetData) {
             return sheetData.map(row => {
                 try {
@@ -355,6 +318,7 @@
             return { total: totalProjects, planned: plannedProjects, ongoing: ongoingProjects, completed: completedProjects, decisions: decisionNeeded };
         }
 
+        // --- UI 组件渲染 ---
         function renderKeyMetrics(metrics) {
             const container = document.getElementById('key-metrics-container');
             container.innerHTML = `
@@ -392,9 +356,30 @@
             }).join('');
         }
 
+        function extractDate(title) {
+            const match = title.match(/(\d{1,2})\/(\d{1,2})/);
+            if (match) {
+                const month = parseInt(match[1], 10);
+                const day = parseInt(match[2], 10);
+                return month * 100 + day; 
+            }
+            return null;
+        }
+
         function renderHighlightProjects(reports) {
             const container = document.getElementById('highlight-projects-container');
-            const nonDecisionReports = reports.filter(r => r.details.needsDecision !== '是');
+            let nonDecisionReports = reports.filter(r => r.details.needsDecision !== '是');
+            
+            nonDecisionReports.sort((a, b) => {
+                const dateA = extractDate(a.details.theme);
+                const dateB = extractDate(b.details.theme);
+
+                if (dateA !== null && dateB !== null) return dateA - dateB;
+                if (dateA !== null) return -1;
+                if (dateB !== null) return 1;
+                return 0;
+            });
+
             if (nonDecisionReports.length === 0) {
                 container.innerHTML = `<div class="bg-white p-5 rounded-lg border border-slate-200 text-center text-slate-500">在此篩選條件下，尚無一般報告可供顯示。</div>`;
                 return;
@@ -421,7 +406,6 @@
                 if (increaseMatch) {
                     increaseHtml = `<div class="flex items-center gap-1 text-green-600 font-semibold mt-1">
                                       <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M12 7a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 100 2h8a1 1 0 100-2H8z" clip-rule="evenodd" />
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.002-3.998a1 1 0 001.932-.518l.849-4.242a1 1 0 00-.316-1.032l-4.242-.849a1 1 0 00-1.033.316l-.518 1.932a1 1 0 001.384 1.383l4-2zm-3.21.316a1 1 0 001.384-1.383l-4 2a1 1 0 00-.518 1.932l1.932.518a1 1 0 001.032-.316l.849-4.242z" clip-rule="evenodd" />
                                        </svg>
                                       <span>(較往年提升${increaseMatch[1]}篇)</span>
@@ -436,11 +420,17 @@
                 const percentage = max > 0 ? (value / max * 100) : 0;
                 return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">進度達成</span><span class="text-lg font-bold text-blue-800">${value} / ${max}</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
             }
-            match = text.match(/(\d+\.?\d*)\s*%/);
+
+            // --- MODIFIED SECTION START ---
+            match = text.match(/(?:^([\u4e00-\u9fa5a-zA-Z]+)\s+)?(\d+\.?\d*)\s*%/);
             if (match) {
-                const percentage = parseFloat(match[1]), color = percentage >= 90 ? 'bg-green-600' : 'bg-amber-500';
-                 return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">達成率</span><span class="text-lg font-bold ${color.replace('bg-','text-')}">${percentage}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="${color} h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
+                const label = match[1] || '規劃進度';
+                const percentage = parseFloat(match[2]);
+                const color = percentage >= 90 ? 'bg-green-600' : 'bg-amber-500';
+                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">${label}</span><span class="text-lg font-bold ${color.replace('bg-','text-')}">${percentage}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="${color} h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
             }
+            // --- MODIFIED SECTION END ---
+
             const patterns = [{ regex: /(\d+\.?\d*)\s*(分)/, label: '滿意度/分數' },{ regex: /(\d+)\s*(位|人|項|個|件|場|種)/, label: '數量/人次' }];
              for (const p of patterns) {
                 match = text.match(p.regex);
@@ -461,13 +451,15 @@
         }
         
         const getTimelineDates = (actionSummary) => {
-            const dateRegex = /(\d{1,2})\/\d{1,2}/g;
+            const dateRegex = /(\d{1,2})\/(\d{1,2})/g;
             let dates = [];
             let match;
+            const currentYear = new Date().getFullYear();
             while ((match = dateRegex.exec(actionSummary)) !== null) {
-                dates.push(new Date(new Date().getFullYear(), parseInt(match[1]) - 1, parseInt(match[2])));
+                dates.push(new Date(currentYear, parseInt(match[1]) - 1, parseInt(match[2])));
             }
             if (dates.length < 2) return { start: null, end: null };
+            dates.sort((a, b) => a - b);
             return { start: dates[0], end: dates[dates.length - 1] };
         };
 
@@ -477,7 +469,7 @@
             if (now > end) return 100;
             const totalDuration = end.getTime() - start.getTime();
             const elapsed = now.getTime() - start.getTime();
-            return (elapsed / totalDuration) * 100;
+            return totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
         };
 
         function createTimeline(actionSummary) {
@@ -504,19 +496,8 @@
             if (isTimeline) {
                 contentHtml = createTimeline(content);
             } else {
-                 // 確保點列式內容會被 marked.js 正確解析
                 let processedContent = content.trim().replace(/(\d\.)\s/g, '\n$1 ');
-                let summary = processedContent;
-                const maxLength = 90; 
-                if (summary.length > maxLength) {
-                    const firstSentenceEnd = summary.search(/[。！？]/);
-                    if (firstSentenceEnd !== -1 && firstSentenceEnd < maxLength) {
-                        summary = summary.substring(0, firstSentenceEnd + 1);
-                    } else {
-                        summary = summary.substring(0, maxLength) + '...';
-                    }
-                }
-                contentHtml = `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(summary)}</div>`;
+                contentHtml = `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedContent)}</div>`;
             }
 
             return `<div class="flex items-start gap-3"><div class="flex-shrink-0 text-slate-500 mt-1">${iconSvg}</div><div class="flex-grow"><p class="font-bold text-slate-800 text-base">${title}</p><div class="mt-2">${contentHtml}</div></div></div>`;
@@ -543,7 +524,8 @@
             const d = report.details;
             return `<div class="bg-white p-5 rounded-lg border-l-4 border-orange-400 shadow-sm transition hover:shadow-md hover:border-orange-500"><h3 class="font-bold text-slate-800">${d.theme}</h3><p class="text-slate-600 mt-2">${d.objective}</p><div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg"><p class="font-semibold text-orange-800 text-sm">待決策問題：</p><p class="text-slate-700 mt-1">${d.decisionQuestion}</p></div><p class="text-right text-xs text-slate-500 mt-4">負責人：${report.person} (${report.group})</p></div>`;
         }
-
+        
+        // --- 辅助函数 ---
         function updateTimestamp(isoString) {
             const date = new Date(isoString);
             const formattedDate = new Intl.DateTimeFormat('zh-TW', { dateStyle: 'long', timeStyle: 'short', hour12: false }).format(date);
@@ -559,13 +541,10 @@
             overlay.classList.remove('backdrop-blur-sm');
         }
 
+        // --- 弹出窗口事件处理 ---
         function setupModalListeners() {
             document.getElementById('modal-close').addEventListener('click', closeMetricModal);
             document.getElementById('metric-modal').addEventListener('click', (e) => { if (e.target.id === 'metric-modal') closeMetricModal(); });
-            document.getElementById('ai-modal-close').addEventListener('click', closeAIModal);
-            document.getElementById('ai-modal').addEventListener('click', (e) => { if (e.target.id === 'ai-modal') closeAIModal(); });
-            document.getElementById('summary-modal-close').addEventListener('click', closeSummaryModal);
-            document.getElementById('summary-modal').addEventListener('click', (e) => { if (e.target.id === 'summary-modal') closeSummaryModal(); });
         }
 
         function showMetricModal(metricType) {
@@ -585,42 +564,7 @@
         }
 
         function closeMetricModal() { document.getElementById('metric-modal').classList.add('hidden'); }
-        function closeAIModal() { document.getElementById('ai-modal').classList.add('hidden'); }
-        function closeSummaryModal() { document.getElementById('summary-modal').classList.add('hidden'); }
 
-        function setupAIButtonListeners() {
-            document.getElementById('ai-analysis-btn').addEventListener('click', handleAIAnalysisRequest);
-            document.getElementById('ai-summary-btn').addEventListener('click', handleAISummaryRequest);
-        }
-        
-        async function handleAIRequest(action, modalId, spinnerId, contentId) {
-            const modal = document.getElementById(modalId), spinner = document.getElementById(spinnerId), contentDiv = document.getElementById(contentId);
-            modal.classList.remove('hidden'); modal.classList.add('flex');
-            spinner.style.display = 'flex'; contentDiv.classList.add('hidden'); contentDiv.innerHTML = '';
-            const reportsToProcess = getFilteredReports();
-            if (reportsToProcess.length === 0) {
-                contentDiv.innerHTML = `<p class="text-slate-600 text-center">沒有可供分析的報告。</p>`;
-                spinner.style.display = 'none'; contentDiv.classList.remove('hidden');
-                return;
-            }
-            try {
-                const response = await fetch(WEB_APP_URL, {method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, reports: reportsToProcess })});
-                if (!response.ok) throw new Error(`AI 伺服器回應錯誤: ${response.status}`);
-                const result = await response.json();
-                if (result.status === 'success') {
-                    contentDiv.innerHTML = marked.parse(result.analysis || result.summary);
-                } else {
-                    throw new Error(result.message || 'AI 處理失敗');
-                }
-            } catch (error) {
-                contentDiv.innerHTML = `<p class="text-red-600 text-center">處理時發生錯誤：<br>${error.message}</p>`;
-            } finally {
-                spinner.style.display = 'none'; contentDiv.classList.remove('hidden');
-            }
-        }
-        
-        function handleAIAnalysisRequest() { handleAIRequest('analyze', 'ai-modal', 'ai-analysis-spinner', 'ai-analysis-content'); }
-        function handleAISummaryRequest() { handleAIRequest('summarize', 'summary-modal', 'ai-summary-spinner', 'ai-summary-content'); }
     </script>
 </body>
 </html>
