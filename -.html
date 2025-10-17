@@ -38,13 +38,13 @@
         .status-planned { background-color: #e0f2fe; color: #0369a1; }
 
         .highlight-value {
-            font-size: 2rem; /* 32px */ font-weight: 700;
+            font-size: 2.5rem; /* 40px */ font-weight: 800;
             line-height: 1.1; display: flex; align-items: baseline;
-            white-space: nowrap; /* 防止數字與單位換行 */
+            white-space: nowrap;
         }
         .highlight-value .unit {
-            font-size: 1rem; /* 16px */ font-weight: 500;
-            color: #475569; margin-left: 0.25rem;
+            font-size: 1.125rem; /* 18px */ font-weight: 500;
+            color: #475569; margin-left: 0.35rem;
         }
         
         .filter-select {
@@ -55,22 +55,14 @@
             background-size: 1.5em 1.5em; padding-right: 2.5rem;
         }
         
-        .ai-content h3 {
-            font-size: 1.125rem; font-weight: 700; color: #1e3a8a;
-            margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .ai-content ul {
-            list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #334155;
-        }
-        .ai-content li { margin-bottom: 0.5rem; }
-        .ai-content h3:first-child { margin-top: 0; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .prose ol, .prose ul { margin-left: 1rem; }
-        .prose li {
-            margin-top: 0.75rem;
-            margin-bottom: 0.25rem;
-        }
+        .prose ol, .prose ul { margin-left: 1.25rem; }
+        .prose li { margin-top: 0.5rem; }
+        .prose p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
 
     </style>
 </head>
@@ -118,7 +110,7 @@
         <!-- 亮點專案區塊 -->
         <div class="mb-12">
             <h2 class="section-title mb-6">策略成果回饋：驅動系統進化的亮點專案</h2>
-            <div id="highlight-projects-container" class="grid grid-cols-1 lg:grid-cols-1 gap-6"></div>
+            <div id="highlight-projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
         <!-- 待決策事項區塊 -->
@@ -142,6 +134,19 @@
         </div>
     </div>
 
+    <!-- 專案詳情視窗 -->
+    <div id="project-detail-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-[51]">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b sticky top-0 bg-white z-10">
+                <h2 id="project-modal-title" class="text-xl font-bold text-blue-800"></h2>
+                <button id="project-modal-close" class="text-slate-400 hover:text-slate-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="project-modal-content" class="p-6 overflow-y-auto custom-scrollbar"></div>
+        </div>
+    </div>
+
     <script>
         // --- 設定 ---
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQvTbjwSKS-UgZN4ZYEhRiNb5M5LPf5rIfpqy_ihVzlwpefW7D24ifECgBmbXa-XS6UQ/exec";
@@ -153,48 +158,26 @@
         // --- 初始化 ---
         document.addEventListener('DOMContentLoaded', async () => {
             let hasError = false;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-                controller.abort();
-                hasError = true;
-                showError("資料載入超時", `無法在 30 秒內從您的 Google Sheet 獲取回應。\n\n**可能原因：**\n1. 您的 Google Sheet 資料量過大，導致後端處理緩慢。\n2. Apps Script 內部可能發生了無限迴圈或預期外的錯誤。\n\n**建議操作：**\n請前往您的 Google Apps Script 專案，點擊左側的「執行作業」，檢查是否有執行失敗或運行時間過長的紀錄。`);
-            }, 30000);
-
             try {
-                const response = await fetch(WEB_APP_URL, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    throw new Error(`網路回應錯誤: Status ${response.status}. 請確認 Apps Script 已正確部署且權限設為「任何人」。`);
-                }
+                const response = await fetch(WEB_APP_URL);
+                if (!response.ok) throw new Error(`網路回應錯誤: Status ${response.status}`);
                 const result = await response.json();
 
-                if (result && result.status === 'success') {
-                    if (!result.data || result.data.length === 0) {
-                         showError("資料庫是空的", "成功連接到您的 Google Sheet，但裡面沒有任何報告資料。請先透過提報表單提交至少一筆資料。");
-                         hasError = true;
-                         return;
-                    }
+                if (result && result.status === 'success' && result.data && result.data.length > 0) {
                     allReports = transformData(result.data);
                     initializeApp(allReports, result.lastUpdated);
                 } else {
-                     throw new Error(`後端指令碼錯誤: ${result.message || "未知錯誤"}`);
+                    throw new Error(result.message || "成功連接但未返回有效資料。");
                 }
             } catch (error) {
-                if (!hasError) {
-                    hasError = true;
-                    console.error("完整錯誤報告:", error);
-                    let userFriendlyMessage = `無法從 Google Sheet 獲取報告。請依照除錯指南檢查設定。\n\n詳細錯誤訊息: ${error.message}`;
-                    if (error.message.includes('openById')) {
-                        userFriendlyMessage = `無法開啟 Google Sheet 檔案。\n\n**最可能的原因：**\n後端指令碼 (Code.gs) 中的 \`SPREADSHEET_ID\` 設定不正確。\n\n**解決方案：**\n請檢查 Apps Script 中的 SPREADSHEET_ID 並**重新部署**您的專案。`;
-                    }
-                    showError("資料載入失敗", userFriendlyMessage);
-                }
+                hasError = true;
+                showError("資料載入失敗", `無法從 Google Sheet 獲取報告。\n\n詳細錯誤訊息: ${error.message}`);
             } finally {
                 if (!hasError) {
-                    document.getElementById('loading-overlay').style.opacity = '0';
+                    const overlay = document.getElementById('loading-overlay');
+                    overlay.style.opacity = '0';
                     setTimeout(() => { 
-                        document.getElementById('loading-overlay').style.display = 'none'; 
+                        overlay.style.display = 'none'; 
                         document.getElementById('dashboard-container').style.visibility = 'visible';
                     }, 300);
                 }
@@ -219,33 +202,29 @@
         }
         
         function getFilteredReports() {
-             let filteredReports = allReports;
+            let reports = allReports;
             if (currentFilters.group !== 'all') {
-                filteredReports = filteredReports.filter(r => r.group === currentFilters.group);
+                reports = reports.filter(r => r.group === currentFilters.group);
             }
             if (currentFilters.person !== 'all') {
-                filteredReports = filteredReports.filter(r => String(r.person || '').includes(currentFilters.person));
+                reports = reports.filter(r => String(r.person || '').includes(currentFilters.person));
             }
-            return filteredReports;
+            return reports;
         }
 
         function populateFilters(reports) {
             const groupFilter = document.getElementById('group-filter');
             const personFilter = document.getElementById('person-filter');
             const groups = [...new Set(reports.map(r => r.group))].sort();
-            groupFilter.innerHTML = `<option value="all">所有組別</option>`;
-            groups.forEach(group => { groupFilter.innerHTML += `<option value="${group}">${group}</option>`; });
+            groupFilter.innerHTML = `<option value="all">所有組別</option>` + groups.map(g => `<option value="${g}">${g}</option>`).join('');
             
             const people = [...new Set(reports.flatMap(r => String(r.person || '').split(/[,、]\s*/).map(p => p.trim())))].filter(Boolean).sort();
-            
-            personFilter.innerHTML = `<option value="all">所有人員</option>`;
-            people.forEach(person => { personFilter.innerHTML += `<option value="${person}">${person}</option>`; });
+            personFilter.innerHTML = `<option value="all">所有人員</option>` + people.map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
         function setupFilterListeners() {
             document.getElementById('group-filter').addEventListener('change', (e) => {
                 currentFilters.group = e.target.value;
-                updatePersonFilterOptions();
                 renderDashboard();
             });
             document.getElementById('person-filter').addEventListener('change', (e) => {
@@ -254,22 +233,9 @@
             });
         }
 
-        function updatePersonFilterOptions() {
-            const personFilter = document.getElementById('person-filter');
-            const selectedGroup = currentFilters.group;
-            let relevantReports = (selectedGroup !== 'all') ? allReports.filter(r => r.group === selectedGroup) : allReports;
-            
-            const people = [...new Set(relevantReports.flatMap(r => String(r.person || '').split(/[,、]\s*/).map(p => p.trim())))].filter(Boolean).sort();
-            
-            personFilter.innerHTML = `<option value="all">所有人員</option>`;
-            people.forEach(person => { personFilter.innerHTML += `<option value="${person}">${person}</option>`; });
-            currentFilters.person = 'all';
-            personFilter.value = 'all';
-        }
-        
         // --- 资料处理 ---
         function transformData(sheetData) {
-            return sheetData.map(row => {
+            return sheetData.map((row, index) => {
                 try {
                     let statusNum;
                     const statusText = String(row["業務進度狀態"] || "");
@@ -288,6 +254,7 @@
                         objective = parts[1] || "";
                     }
                     return {
+                        id: index,
                         group: String(row["負責組別"] || "未分類"),
                         person: String(row["負責人員"] || "未指定"),
                         status: statusNum,
@@ -302,20 +269,18 @@
                             actionSummary: String(row["行動摘要 (關鍵步驟)"] || "")
                         }
                     };
-                } catch (e) {
-                    console.error("處理此行資料時發生錯誤: ", row, e);
-                    return null; 
-                }
+                } catch (e) { return null; }
             }).filter(Boolean);
         }
         
         function calculateKeyMetrics(reports) {
-            const totalProjects = reports.length;
-            const plannedProjects = reports.filter(r => r.status === 1).length;
-            const ongoingProjects = reports.filter(r => r.status === 2).length;
-            const completedProjects = reports.filter(r => r.status === 3).length;
-            const decisionNeeded = reports.filter(r => r.details.needsDecision === '是').length;
-            return { total: totalProjects, planned: plannedProjects, ongoing: ongoingProjects, completed: completedProjects, decisions: decisionNeeded };
+            return {
+                total: reports.length,
+                planned: reports.filter(r => r.status === 1).length,
+                ongoing: reports.filter(r => r.status === 2).length,
+                completed: reports.filter(r => r.status === 3).length,
+                decisions: reports.filter(r => r.details.needsDecision === '是').length
+            };
         }
 
         // --- UI 组件渲染 ---
@@ -333,7 +298,7 @@
         function renderStrategicFocus(reports) {
             const container = document.getElementById('strategic-focus-container');
             const keywords = ["跨部門", "資源", "時程", "溝通", "人力", "預算", "標準化", "流程", "系統"];
-            const keywordCounts = {};
+            let keywordCounts = {};
             keywords.forEach(k => keywordCounts[k] = { count: 0, reports: [] });
             reports.forEach(report => {
                 const challengeText = report.details.challenge;
@@ -347,15 +312,16 @@
             });
             const sortedKeywords = Object.entries(keywordCounts).filter(([_, data]) => data.count > 0).sort(([, a], [, b]) => b.count - a.count).slice(0, 3);
             if (sortedKeywords.length === 0) {
-                container.innerHTML = `<div class="bg-white p-5 rounded-lg border border-slate-200 text-center text-slate-500">目前尚無足夠資料以分析共同挑戰。</div>`;
+                container.innerHTML = `<div class="bg-white p-5 rounded-lg border border-slate-200 text-center text-slate-500 col-span-full">目前尚無足夠資料以分析共同挑戰。</div>`;
                 return;
             }
             container.innerHTML = sortedKeywords.map(([keyword, data]) => {
                 const projectTitles = data.reports.map(r => `<li>${r.details.theme}</li>`).join('');
-                return `<div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex-1 min-w-[280px]"><div class="flex items-center justify-between mb-2"><h4 class="font-bold text-blue-800">挑戰主題：${keyword}</h4><span class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">${data.count} 項相關</span></div><p class="text-xs text-slate-500 mb-2">以下專案均提及此挑戰：</p><ul class="text-xs text-slate-600 list-disc pl-4 space-y-1">${projectTitles}</ul></div>`;
+                return `<div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"><div class="flex items-center justify-between mb-2"><h4 class="font-bold text-blue-800">挑戰主題：${keyword}</h4><span class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">${data.count} 項</span></div><ul class="text-xs text-slate-600 list-disc pl-4 space-y-1">${projectTitles}</ul></div>`;
             }).join('');
         }
 
+        // --- UPDATED: Add sorting logic ---
         function extractDate(title) {
             const match = title.match(/(\d{1,2})\/(\d{1,2})/);
             if (match) {
@@ -368,23 +334,23 @@
 
         function renderHighlightProjects(reports) {
             const container = document.getElementById('highlight-projects-container');
-            let nonDecisionReports = reports.filter(r => r.details.needsDecision !== '是');
+            let displayReports = reports.filter(r => r.details.needsDecision !== '是');
             
-            nonDecisionReports.sort((a, b) => {
+            displayReports.sort((a, b) => {
                 const dateA = extractDate(a.details.theme);
                 const dateB = extractDate(b.details.theme);
 
                 if (dateA !== null && dateB !== null) return dateA - dateB;
-                if (dateA !== null) return -1;
+                if (dateA !== null) return -1; // Prioritize items with dates
                 if (dateB !== null) return 1;
-                return 0;
+                return a.details.theme.localeCompare(b.details.theme); // Fallback sort
             });
-
-            if (nonDecisionReports.length === 0) {
-                container.innerHTML = `<div class="bg-white p-5 rounded-lg border border-slate-200 text-center text-slate-500">在此篩選條件下，尚無一般報告可供顯示。</div>`;
+            
+            if (displayReports.length === 0) {
+                container.innerHTML = `<div class="bg-white p-5 rounded-lg border border-slate-200 text-center text-slate-500 col-span-full">在此篩選條件下，尚無一般報告可供顯示。</div>`;
                 return;
             }
-            container.innerHTML = nonDecisionReports.map(renderProjectCard).join('');
+            container.innerHTML = displayReports.map(renderProjectCard).join('');
         }
         
         function renderDecisionItems(reports) {
@@ -396,61 +362,43 @@
             }
             container.innerHTML = decisionReports.map(renderDecisionCard).join('');
         }
-        
-        function extractAndVisualizeData(text, actionSummary) {
-            let match = text.match(/總\w*數(\d+)\s*篇/);
-            if (match) {
-                const total = match[1];
-                let increaseHtml = '';
-                const increaseMatch = text.match(/(?:較|提升)(\d+)\s*篇/);
-                if (increaseMatch) {
-                    increaseHtml = `<div class="flex items-center gap-1 text-green-600 font-semibold mt-1">
-                                      <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.002-3.998a1 1 0 001.932-.518l.849-4.242a1 1 0 00-.316-1.032l-4.242-.849a1 1 0 00-1.033.316l-.518 1.932a1 1 0 001.384 1.383l4-2zm-3.21.316a1 1 0 001.384-1.383l-4 2a1 1 0 00-.518 1.932l1.932.518a1 1 0 001.032-.316l.849-4.242z" clip-rule="evenodd" />
-                                       </svg>
-                                      <span>(較往年提升${increaseMatch[1]}篇)</span>
-                                    </div>`;
-                }
-                return `<div class="text-center w-full"><p class="text-sm text-slate-600">總投稿篇數</p><p class="text-6xl font-extrabold text-blue-800 my-2">${total}<span class="text-2xl font-semibold text-slate-500 ml-2">篇</span></p>${increaseHtml}</div>`;
-            }
 
-            match = text.match(/(?:\s|^)(\d+)\s*\/\s*(\d+)(?:\s|$)/);
-            if (match) {
-                const value = parseInt(match[1]), max = parseInt(match[2]);
-                const percentage = max > 0 ? (value / max * 100) : 0;
-                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">進度達成</span><span class="text-lg font-bold text-blue-800">${value} / ${max}</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
-            }
+        function renderProjectCard(report) {
+            const d = report.details;
+            const statusMap = {1: { text: '規劃中', class: 'status-planned' }, 2: { text: '進行中', class: 'status-ongoing' }, 3: { text: '已完成', class: 'status-completed' }};
+            const statusInfo = statusMap[report.status] || { text: '未知', class: '' };
+            const visualDataHtml = extractAndVisualizeData(d.results, d.actionSummary);
 
-            // --- MODIFIED SECTION START ---
-            match = text.match(/(?:^([\u4e00-\u9fa5a-zA-Z]+)\s+)?(\d+\.?\d*)\s*%/);
-            if (match) {
-                const label = match[1] || '規劃進度';
-                const percentage = parseFloat(match[2]);
-                const color = percentage >= 90 ? 'bg-green-600' : 'bg-amber-500';
-                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">${label}</span><span class="text-lg font-bold ${color.replace('bg-','text-')}">${percentage}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="${color} h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
-            }
-            // --- MODIFIED SECTION END ---
+            const contentHints = [
+                d.actionSummary && d.actionSummary !== '無' && '行動摘要', 
+                d.challenge && d.challenge !== '無' && '挑戰分析',
+                d.riskObservation && d.riskObservation !== '無' && '風險觀察', 
+                d.impact && d.impact !== '無' && '系統影響力'
+            ].filter(Boolean);
 
-            const patterns = [{ regex: /(\d+\.?\d*)\s*(分)/, label: '滿意度/分數' },{ regex: /(\d+)\s*(位|人|項|個|件|場|種)/, label: '數量/人次' }];
-             for (const p of patterns) {
-                match = text.match(p.regex);
-                if (match) {
-                    let value = match[1], unit = match[2], label = p.label, color = 'text-blue-800';
-                     if (text.includes('超標')) { label = '成果超標'; color = 'text-green-700'; }
-                     return `<div class="text-center w-full"><div class="flex justify-center items-center gap-2"><p class="text-sm text-slate-600">${label}</p><p class="highlight-value ${color}">${value}<span class="unit">${unit}</span></p></div><p class="text-xs text-slate-500 mt-2 text-center">${text.replace(match[0], '').replace(label, '').replace(/[()（）]/g, '').trim()}</p></div>`;
-                }
-            }
-
-            const timelineDates = getTimelineDates(actionSummary);
-            if (timelineDates.start && timelineDates.end) {
-                const percentage = calculateProgressPercentage(timelineDates.start, timelineDates.end);
-                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">時間進度</span><span class="text-lg font-bold text-blue-800">${Math.round(percentage)}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">根據行動摘要時間自動計算</p></div>`;
-            }
-
-            return text && text.trim() ? `<p class="text-slate-600 text-sm p-2">${text}</p>` : `<p class="text-slate-400 text-sm">未提供量化成果</p>`;
+            return `
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer transition-all hover:shadow-lg hover:border-blue-300" onclick="showProjectDetailModal(${report.id})">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-base font-bold text-blue-800 flex-1 pr-2">${d.theme}</h3>
+                    <div class="status-tag ${statusInfo.class} flex-shrink-0">${statusInfo.text}</div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col justify-center items-center h-32 my-auto">
+                    <div class="flex-grow flex flex-col justify-center items-center w-full">${visualDataHtml}</div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-xs text-slate-500 mb-2">報告包含：</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${contentHints.map(hint => `<span class="bg-slate-200 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-full">${hint}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 text-right text-xs text-slate-600 font-medium border-t border-slate-100 mt-4">
+                    <span>負責：</span>${report.person} (${report.group})
+                </div>
+            </div>`;
         }
-        
-        const getTimelineDates = (actionSummary) => {
+
+        function getTimelineDates(actionSummary) {
+            if (!actionSummary) return { start: null, end: null };
             const dateRegex = /(\d{1,2})\/(\d{1,2})/g;
             let dates = [];
             let match;
@@ -463,7 +411,7 @@
             return { start: dates[0], end: dates[dates.length - 1] };
         };
 
-        const calculateProgressPercentage = (start, end) => {
+        function calculateProgressPercentage(start, end) {
             const now = new Date();
             if (now < start) return 0;
             if (now > end) return 100;
@@ -471,53 +419,40 @@
             const elapsed = now.getTime() - start.getTime();
             return totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
         };
-
-        function createTimeline(actionSummary) {
-            if (!actionSummary || actionSummary.trim() === '') return '';
-            const steps = actionSummary.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底))\s*([^※\n]+)/g);
-
-            if (!steps || steps.length === 0) {
-                 return `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(actionSummary)}</div>`;
-            }
-            const timelineHtml = steps.map((step, index) => {
-                const parts = step.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底))\s*([^※\n]+)/);
-                const date = parts[1];
-                const task = parts[2].trim();
-                const isLast = index === steps.length - 1;
-                return `<div class="relative flex items-start"><div class="flex-shrink-0 w-24 text-right pr-4"><p class="font-semibold text-sm text-blue-700">${date}</p></div><div class="relative w-full pl-4"><div class="absolute top-1/2 -translate-y-1/2 -left-px h-full w-0.5 ${isLast ? '' : 'bg-slate-200'}"></div><div class="absolute top-1/2 -translate-y-1/2 -left-[5px] w-3 h-3 bg-blue-600 rounded-full border-2 border-white"></div><p class="text-sm text-slate-800">${task}</p></div></div>`;
-            }).join('');
-            return `<div class="space-y-3">${timelineHtml}</div>`;
-        }
-
-        function createDetailSectionWithIcon(title, content, iconSvg, isTimeline = false) {
-            if (!content || content.trim() === '') return '';
-            
-            let contentHtml;
-            if (isTimeline) {
-                contentHtml = createTimeline(content);
-            } else {
-                let processedContent = content.trim().replace(/(\d\.)\s/g, '\n$1 ');
-                contentHtml = `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedContent)}</div>`;
+        
+        function extractAndVisualizeData(text, actionSummary) {
+            let match = text.match(/(?:\s|^)(\d+)\s*\/\s*(\d+)(?:\s|$)/);
+            if (match) {
+                const value = parseInt(match[1], 10), max = parseInt(match[2], 10);
+                const percentage = max > 0 ? (value / max * 100) : 0;
+                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">進度達成</span><span class="text-lg font-bold text-blue-800">${value}/${max}</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
             }
 
-            return `<div class="flex items-start gap-3"><div class="flex-shrink-0 text-slate-500 mt-1">${iconSvg}</div><div class="flex-grow"><p class="font-bold text-slate-800 text-base">${title}</p><div class="mt-2">${contentHtml}</div></div></div>`;
-        }
-
-        function renderProjectCard(report) {
-            const d = report.details;
-            const statusMap = {1: { text: '規劃中', class: 'status-planned' }, 2: { text: '進行中', class: 'status-ongoing' }, 3: { text: '已完成', class: 'status-completed' }};
-            const statusInfo = statusMap[report.status] || { text: '未知', class: '' };
-            const visualDataHtml = extractAndVisualizeData(d.results, d.actionSummary);
-            const icons = {
-                action: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 4h.01M12 12h.01M12 16h.01M15 12h.01M15 16h.01" /></svg>`,
-                challenge: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`,
-                risk: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`,
-                impact: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`
-            };
+            match = text.match(/(?:^([\u4e00-\u9fa5a-zA-Z]+)\s+)?(\d+\.?\d*)\s*%/);
+            if (match) {
+                const label = match[1] || '規劃進度';
+                const percentage = parseFloat(match[2]);
+                const color = percentage >= 90 ? 'bg-green-600' : (percentage >= 50 ? 'bg-amber-500' : 'bg-red-500');
+                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">${label}</span><span class="text-lg font-bold ${color.replace('bg-','text-')}">${percentage}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="${color} h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">${text}</p></div>`;
+            }
             
-            const objectiveHtml = d.objective ? `<div class="mt-4 p-4 bg-slate-50 border-l-4 border-slate-300 text-slate-600 rounded-r-lg">${d.objective}</div>` : '';
+            const patterns = [{ regex: /(\d+\.?\d*)\s*(分)/, label: '滿意度/分數' },{ regex: /(\d+)\s*(位|人|項|個|件|場|種)/, label: '數量/人次' }];
+             for (const p of patterns) {
+                match = text.match(p.regex);
+                if (match) {
+                    let value = match[1], unit = match[2], label = p.label, color = 'text-blue-800';
+                     if (text.includes('超標')) { label = '成果超標'; color = 'text-green-700'; }
+                     return `<div class="text-center w-full"><div class="flex flex-col items-center justify-center"><p class="text-sm text-slate-600 -mb-1">${label}</p><p class="highlight-value ${color}">${value}<span class="unit">${unit}</span></p></div><p class="text-xs text-slate-500 -mt-1 text-center">${text.replace(match[0], '').replace(label, '').replace(/[()（）]/g, '').trim()}</p></div>`;
+                }
+            }
+            
+            const timelineDates = getTimelineDates(actionSummary);
+            if (timelineDates.start && timelineDates.end) {
+                const percentage = calculateProgressPercentage(timelineDates.start, timelineDates.end);
+                return `<div><div class="flex justify-between items-baseline mb-1"><span class="text-sm font-medium text-slate-700">時間進度</span><span class="text-lg font-bold text-blue-800">${Math.round(percentage)}%</span></div><div class="w-full bg-slate-200 rounded-full h-3"><div class="bg-blue-600 h-3 rounded-full" style="width: ${percentage}%"></div></div><p class="text-xs text-slate-500 mt-2 text-center">根據行動摘要時間自動計算</p></div>`;
+            }
 
-            return `<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-lg hover:border-blue-300 flex flex-col h-full"><div class="flex justify-between items-start mb-2"><h3 class="text-lg font-bold text-blue-800">${d.theme}</h3><div class="status-tag ${statusInfo.class} flex-shrink-0 ml-4">${statusInfo.text}</div></div>${objectiveHtml}<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow mt-6"><div class="lg:col-span-2 space-y-6">${createDetailSectionWithIcon('行動摘要', d.actionSummary, icons.action, true)}${createDetailSectionWithIcon('關鍵挑戰/痛點', d.challenge, icons.challenge)}${createDetailSectionWithIcon('風險/待觀察項目', d.riskObservation, icons.risk)}${createDetailSectionWithIcon('系統影響力', d.impact, icons.impact)}</div><div class="bg-green-50 p-4 rounded-lg border border-green-200 flex flex-col justify-center items-center h-full"><p class="font-semibold text-green-800 mb-2">關鍵量化成果</p><div class="flex-grow flex flex-col justify-center items-center w-full">${visualDataHtml}</div></div></div><p class="text-right text-xs text-slate-700 mt-4 pt-4 border-t border-slate-100 font-medium">負責：${report.person} (${report.group})</p></div>`;
+            return text && text.trim() ? `<p class="text-slate-600 text-sm p-2 text-center">${text}</p>` : `<p class="text-slate-400 text-sm">未提供量化成果</p>`;
         }
 
         function renderDecisionCard(report) {
@@ -528,8 +463,7 @@
         // --- 辅助函数 ---
         function updateTimestamp(isoString) {
             const date = new Date(isoString);
-            const formattedDate = new Intl.DateTimeFormat('zh-TW', { dateStyle: 'long', timeStyle: 'short', hour12: false }).format(date);
-            document.getElementById('last-updated').textContent = `資料更新於：${formattedDate}`;
+            document.getElementById('last-updated').textContent = `資料更新於：${new Intl.DateTimeFormat('zh-TW', { dateStyle: 'long', timeStyle: 'short', hour12: false }).format(date)}`;
         }
         
         function showError(title, message) {
@@ -538,34 +472,117 @@
             overlay.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow-xl max-w-lg mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">${title}</h2><div class="text-slate-600 whitespace-pre-wrap text-left">${message.replace(/\n/g, '<br>')}</div></div>`;
             overlay.style.opacity = '1';
             overlay.style.display = 'flex';
-            overlay.classList.remove('backdrop-blur-sm');
         }
 
         // --- 弹出窗口事件处理 ---
         function setupModalListeners() {
             document.getElementById('modal-close').addEventListener('click', closeMetricModal);
             document.getElementById('metric-modal').addEventListener('click', (e) => { if (e.target.id === 'metric-modal') closeMetricModal(); });
+            document.getElementById('project-modal-close').addEventListener('click', closeProjectDetailModal);
+            document.getElementById('project-detail-modal').addEventListener('click', (e) => { if (e.target.id === 'project-detail-modal') closeProjectDetailModal(); });
         }
 
         function showMetricModal(metricType) {
             const modal = document.getElementById('metric-modal'), modalTitle = document.getElementById('modal-title'), modalContent = document.getElementById('modal-content');
-            let title = '', items = getFilteredReports();
-            switch(metricType) {
-                case 'total': title = '所有專案列表'; break;
-                case 'planned': title = '規劃中專案列表'; items = items.filter(r => r.status === 1); break;
-                case 'ongoing': title = '進行中專案列表'; items = items.filter(r => r.status === 2); break;
-                case 'completed': title = '已完成專案列表'; items = items.filter(r => r.status === 3); break;
-                case 'decisions': title = '待決策議題列表'; items = items.filter(r => r.details.needsDecision === '是'); break;
-            }
-            modalTitle.textContent = `${title} (${items.length} 項)`;
-            modalContent.innerHTML = items.length > 0 ? items.map(item => `<div class="border border-slate-200 rounded-lg p-4 bg-slate-50"><p class="font-bold text-blue-800">${item.details.theme}</p><p class="text-sm text-slate-600 mt-1">${item.details.objective}</p><p class="text-sm text-slate-500 mt-2"><b>負責人:</b> ${item.person} (${item.group})</p><p class="text-sm text-slate-500 mt-1"><b>量化成果:</b> ${item.details.results || 'N/A'}</p></div>`).join('') : `<p class="text-slate-500 text-center">此分類下沒有任何項目。</p>`;
+            let items = getFilteredReports();
+            const typeMap = {
+                'total': { title: '所有專案', filter: () => true },
+                'planned': { title: '規劃中專案', filter: r => r.status === 1 },
+                'ongoing': { title: '進行中專案', filter: r => r.status === 2 },
+                'completed': { title: '已完成專案', filter: r => r.status === 3 },
+                'decisions': { title: '待決策議題', filter: r => r.details.needsDecision === '是' }
+            };
+            const current = typeMap[metricType];
+            items = items.filter(current.filter);
+            modalTitle.textContent = `${current.title}列表 (${items.length} 項)`;
+            modalContent.innerHTML = items.length > 0 ? items.map(item => `<div class="border border-slate-200 rounded-lg p-4 bg-slate-50"><p class="font-bold text-blue-800">${item.details.theme}</p><p class="text-sm text-slate-600 mt-1">${item.details.objective}</p><p class="text-sm text-slate-500 mt-2"><b>負責人:</b> ${item.person} (${item.group})</p></div>`).join('') : `<p class="text-slate-500 text-center">此分類下沒有任何項目。</p>`;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
         function closeMetricModal() { document.getElementById('metric-modal').classList.add('hidden'); }
 
+        function showProjectDetailModal(reportId) {
+            const report = allReports.find(r => r.id === reportId);
+            if (!report) return;
+
+            const modal = document.getElementById('project-detail-modal');
+            const d = report.details;
+            document.getElementById('project-modal-title').textContent = d.theme;
+            
+            const icons = {
+                action: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`,
+                challenge: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`,
+                risk: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`,
+                impact: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`
+            };
+            const objectiveHtml = d.objective ? `<blockquote class="mb-6 p-4 bg-slate-100 border-l-4 border-slate-400 text-slate-700 rounded-r-lg">${d.objective}</blockquote>` : '';
+            
+            // --- UPDATED: Pre-process content before passing to marked.parse ---
+            const resultsHtml = `<div class="mb-6 bg-green-50 p-4 rounded-xl border border-green-200"><p class="font-bold text-green-800 mb-2">關鍵量化成果</p><div class="prose prose-sm max-w-none text-slate-700">${marked.parse(d.results.replace(/\s+(?=\d+\.)/g, '<br><br>'))}</div></div>`;
+            
+            document.getElementById('project-modal-content').innerHTML = `
+                ${objectiveHtml}
+                <div class="space-y-8">
+                    ${resultsHtml}
+                    ${createDetailSection('行動摘要', d.actionSummary, icons.action, true)}
+                    ${createDetailSection('關鍵挑戰/痛點', d.challenge, icons.challenge)}
+                    ${createDetailSection('風險/待觀察項目', d.riskObservation, icons.risk)}
+                    ${createDetailSection('系統影響力', d.impact, icons.impact)}
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        function createTimeline(actionSummary) {
+            if (!actionSummary || actionSummary.trim() === '' || actionSummary.trim() === '無') return '<p class="text-slate-400">未提供行動摘要。</p>';
+            
+            const steps = actionSummary.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底)?)\s*([^※\n]+)/g);
+
+            if (!steps || steps.length === 0) {
+                 // Fallback for content that is not a date-based timeline
+                const processedFallback = actionSummary.replace(/\s+(?=\d+\.)/g, '<br><br>');
+                return `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedFallback)}</div>`;
+            }
+            return `<div class="relative space-y-4">
+                        <div class="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-200"></div>
+                        ${steps.map((step) => {
+                            const parts = step.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底)?)\s*([^※\n]+)/);
+                            if (!parts) return '';
+                            const date = parts[1];
+                            const task = parts[2].trim();
+                            return `<div class="relative flex items-start pl-8">
+                                        <div class="absolute left-0 top-1.5 w-4 h-4 bg-blue-600 rounded-full border-4 border-white"></div>
+                                        <p class="font-semibold text-sm text-blue-700 w-24 flex-shrink-0">${date}</p>
+                                        <p class="text-sm text-slate-800">${task}</p>
+                                    </div>`
+                        }).join('')}
+                    </div>`;
+        }
+
+        function createDetailSection(title, content, iconSvg, isTimeline = false) {
+            if (!content || content.trim() === '' || content.trim() === '無') return '';
+            
+            // Process content for non-timeline sections to add line breaks for numbered lists
+            const processedContent = content.trim().replace(/\s+(?=\d+\.)/g, '<br><br>');
+            
+            // Use original content for timeline parsing, and processed content for others
+            let contentHtml = isTimeline 
+                ? createTimeline(content) 
+                : `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedContent)}</div>`;
+
+            return `<div class="flex items-start gap-4"><div class="flex-shrink-0 text-slate-500 mt-1">${iconSvg}</div><div class="flex-grow"><p class="font-bold text-slate-800 text-base">${title}</p><div class="mt-2">${contentHtml}</div></div></div>`;
+        }
+
+        function closeProjectDetailModal() {
+            document.getElementById('project-detail-modal').classList.add('hidden');
+        }
+
     </script>
 </body>
 </html>
+
+
 
