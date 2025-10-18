@@ -64,6 +64,23 @@
         .prose li { margin-top: 0.5rem; }
         .prose p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
 
+        /* 會議摘要樣式 */
+        .summary-modal .modal-card { max-width: 900px; width: 95%; }
+        .summary-header { background: linear-gradient(90deg,#0ea5e9,#7c3aed); color: white; padding: 18px; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+        .summary-body { padding: 20px; max-height: 70vh; overflow:auto; }
+        .summary-overview { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+        .summary-pill { background:#f1f5f9; padding:10px 14px; border-radius:10px; font-weight:600; color:#0f172a; min-width:120px; text-align:center; }
+        .summary-section { margin-bottom:18px; }
+        .summary-section h4 { font-size:1rem; font-weight:700; color:#0f172a; margin-bottom:8px; }
+        .summary-item { padding:10px; border-radius:8px; background:#ffffff; border:1px solid #e6edf3; margin-bottom:8px; }
+        .summary-item .meta { font-size:0.85rem; color:#475569; margin-bottom:6px; }
+        .summary-important { border-left:4px solid #f97316; padding-left:12px; background:#fff7ed; }
+        /* 列印友善 */
+        @media print {
+            body * { visibility: hidden; }
+            #meeting-summary-modal, #meeting-summary-modal * { visibility: visible; }
+            #meeting-summary-modal { position: static; top: 0; left: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -89,6 +106,11 @@
                 <div class="flex flex-col sm:flex-row items-stretch gap-2 w-full md:w-auto">
                     <select id="group-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
                     <select id="person-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
+                    <!-- 會議摘要按鈕 -->
+                    <button id="meeting-summary-btn" class="ml-2 w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m2 0a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+                        會議摘要
+                    </button>
                 </div>
             </div>
             <p id="last-updated" class="text-sm text-slate-400 mt-2 text-right"></p>
@@ -144,6 +166,25 @@
                 </button>
             </div>
             <div id="project-modal-content" class="p-6 overflow-y-auto custom-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- 會議摘要彈窗 -->
+    <div id="meeting-summary-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-[52] summary-modal">
+        <div class="modal-card bg-white rounded-xl shadow-2xl flex flex-col">
+            <div class="summary-header flex items-center justify-between">
+                <div>
+                    <div class="text-sm opacity-90">會議摘要（供主管會前確認）</div>
+                    <div id="summary-title" class="text-2xl font-extrabold mt-1">今日重點業務議題</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="meeting-summary-print" class="bg-white text-slate-700 px-3 py-2 rounded-md text-sm">列印</button>
+                    <button id="meeting-summary-close" class="text-white hover:opacity-90">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="meeting-summary-content" class="summary-body"></div>
         </div>
     </div>
 
@@ -583,103 +624,124 @@
             document.getElementById('metric-modal').addEventListener('click', (e) => { if (e.target.id === 'metric-modal') closeMetricModal(); });
             document.getElementById('project-modal-close').addEventListener('click', closeProjectDetailModal);
             document.getElementById('project-detail-modal').addEventListener('click', (e) => { if (e.target.id === 'project-detail-modal') closeProjectDetailModal(); });
+
+            // 會議摘要按鈕與 modal 事件
+            const summaryBtn = document.getElementById('meeting-summary-btn');
+            if (summaryBtn) summaryBtn.addEventListener('click', () => {
+                const summaryHtml = generateMeetingSummary();
+                document.getElementById('meeting-summary-content').innerHTML = summaryHtml;
+                document.getElementById('meeting-summary-modal').classList.remove('hidden');
+                document.getElementById('meeting-summary-modal').classList.add('flex');
+            });
+            document.getElementById('meeting-summary-close').addEventListener('click', () => {
+                document.getElementById('meeting-summary-modal').classList.add('hidden');
+            });
+            document.getElementById('meeting-summary-modal').addEventListener('click', (e) => { if (e.target.id === 'meeting-summary-modal') document.getElementById('meeting-summary-modal').classList.add('hidden'); });
+            document.getElementById('meeting-summary-print').addEventListener('click', () => window.print());
         }
 
-        function showMetricModal(metricType) {
-            const modal = document.getElementById('metric-modal'), modalTitle = document.getElementById('modal-title'), modalContent = document.getElementById('modal-content');
-            let items = getFilteredReports();
-            const typeMap = {
-                'total': { title: '所有專案', filter: () => true },
-                'planned': { title: '規劃中專案', filter: r => r.status === 1 },
-                'ongoing': { title: '進行中專案', filter: r => r.status === 2 },
-                'completed': { title: '已完成專案', filter: r => r.status === 3 },
-                'decisions': { title: '待決策議題', filter: r => r.details.needsDecision === '是' }
-            };
-            const current = typeMap[metricType];
-            items = items.filter(current.filter);
-            modalTitle.textContent = `${current.title}列表 (${items.length} 項)`;
-            modalContent.innerHTML = items.length > 0 ? items.map(item => `<div class="border border-slate-200 rounded-lg p-4 bg-slate-50"><p class="font-bold text-blue-800">${item.details.theme}</p><p class="text-sm text-slate-600 mt-1">${item.details.objective}</p><p class="text-sm text-slate-500 mt-2"><b>負責人:</b> ${item.person} (${item.group})</p></div>`).join('') : `<p class="text-slate-500 text-center">此分類下沒有任何項目。</p>`;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+        // 產生會議摘要 HTML（以目前篩選結果為基礎）
+        function generateMeetingSummary() {
+            const reports = getFilteredReports();
+            const metrics = calculateKeyMetrics(reports);
+            const statusTextMap = {1:'規劃中',2:'進行中',3:'已完成',0:'未分類'};
 
-        function closeMetricModal() { document.getElementById('metric-modal').classList.add('hidden'); }
+            // 決策事項（優先呈現）
+            const decisions = reports.filter(r => r.details.needsDecision === '是').map(r => ({
+                title: r.details.theme,
+                owner: r.person,
+                group: r.group,
+                question: r.details.decisionQuestion || '(未明確說明)',
+                short: (r.details.challenge || r.details.actionSummary || '').split('\n')[0].slice(0,120)
+            }));
 
-        function showProjectDetailModal(reportId) {
-            const report = allReports.find(r => r.id === reportId);
-            if (!report) return;
+            // 重要進行中（取 top 5）
+            const ongoingTop = reports.filter(r => r.status === 2).slice(0,5).map(r => ({
+                title: r.details.theme,
+                owner: r.person,
+                group: r.group,
+                status: statusTextMap[r.status] || '進行中',
+                challenge: (r.details.challenge || '').split('\n')[0].slice(0,140) || '無明確挑戰描述',
+                action: (r.details.actionSummary || '').split('\n')[0].slice(0,140) || '無行動摘要'
+            }));
 
-            const modal = document.getElementById('project-detail-modal');
-            const d = report.details;
-            document.getElementById('project-modal-title').textContent = d.theme;
-            
-            const icons = {
-                action: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`,
-                challenge: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`,
-                risk: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`,
-                impact: `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`
-            };
-            const objectiveHtml = d.objective ? `<blockquote class="mb-6 p-4 bg-slate-100 border-l-4 border-slate-400 text-slate-700 rounded-r-lg">${d.objective}</blockquote>` : '';
-            
-            const resultsHtml = `<div class="mb-6 bg-green-50 p-4 rounded-xl border border-green-200"><p class="font-bold text-green-800 mb-2">關鍵量化成果</p><div class="prose prose-sm max-w-none text-slate-700">${marked.parse(d.results.replace(/\s+(?=\d+\.)/g, '<br><br>'))}</div></div>`;
-            
-            document.getElementById('project-modal-content').innerHTML = `
-                ${objectiveHtml}
-                <div class="space-y-8">
-                    ${resultsHtml}
-                    ${createDetailSection('行動摘要', d.actionSummary, icons.action, true)}
-                    ${createDetailSection('關鍵挑戰/痛點', d.challenge, icons.challenge)}
-                    ${createDetailSection('風險/待觀察項目', d.riskObservation, icons.risk)}
-                    ${createDetailSection('系統影響力', d.impact, icons.impact)}
-                </div>
-            `;
+            // 簡潔專案清單（含關鍵一句話）
+            const briefList = reports.map(r => {
+                const oneLine = r.details.challenge || r.details.actionSummary || r.details.results || '';
+                return {
+                    title: r.details.theme,
+                    owner: r.person,
+                    group: r.group,
+                    status: statusTextMap[r.status] || '未知',
+                    oneLine: oneLine.replace(/\s+/g,' ').trim().slice(0,140)
+                };
+            });
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-        
-        function createTimeline(actionSummary) {
-            if (!actionSummary || actionSummary.trim() === '' || actionSummary.trim() === '無') return '<p class="text-slate-400">未提供行動摘要。</p>';
-            
-            const steps = actionSummary.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底)?)\s*([^※\n]+)/g);
+            // 建構 HTML
+            let html = '';
+            // 概覽數字
+            html += `<div class="summary-overview">`;
+            html += `<div class="summary-pill">總議題<br><span class="text-2xl">${metrics.total}</span></div>`;
+            html += `<div class="summary-pill">規劃中<br><span class="text-2xl text-blue-600">${metrics.planned}</span></div>`;
+            html += `<div class="summary-pill">進行中<br><span class="text-2xl text-amber-600">${metrics.ongoing}</span></div>`;
+            html += `<div class="summary-pill">已完成<br><span class="text-2xl text-green-600">${metrics.completed}</span></div>`;
+            html += `<div class="summary-pill">待決策<br><span class="text-2xl text-red-600">${metrics.decisions}</span></div>`;
+            html += `</div>`;
 
-            if (!steps || steps.length === 0) {
-                 // Fallback for content that is not a date-based timeline
-                const processedFallback = actionSummary.replace(/\s+(?=\d+\.)/g, '<br><br>');
-                return `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedFallback)}</div>`;
+            // 待決策段落（最重要）
+            html += `<div class="summary-section">`;
+            html += `<h4>一、待決策議題（優先審閱）</h4>`;
+            if (decisions.length === 0) {
+                html += `<div class="summary-item">目前無需主管決策的議題。</div>`;
+            } else {
+                decisions.forEach((d, idx) => {
+                    html += `<div class="summary-item summary-important">`;
+                    html += `<div class="meta">#${idx+1} • ${d.owner} (${d.group})</div>`;
+                    html += `<div class="font-bold">${d.title}</div>`;
+                    html += `<div class="mt-2"><strong>待決策問題：</strong>${d.question}</div>`;
+                    if (d.short) html += `<div class="mt-2 text-sm text-slate-600">${d.short}…</div>`;
+                    html += `</div>`;
+                });
             }
-            return `<div class="relative space-y-4">
-                        <div class="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-200"></div>
-                        ${steps.map((step) => {
-                            const parts = step.match(/(\d{1,2}\/\d{1,2}(?:-\d{1,2}\/\d{1,2})?|\d{1,2}月(?:初|中|底)?)\s*([^※\n]+)/);
-                            if (!parts) return '';
-                            const date = parts[1];
-                            const task = parts[2].trim();
-                            return `<div class="relative flex items-start pl-8">
-                                        <div class="absolute left-0 top-1.5 w-4 h-4 bg-blue-600 rounded-full border-4 border-white"></div>
-                                        <p class="font-semibold text-sm text-blue-700 w-24 flex-shrink-0">${date}</p>
-                                        <p class="text-sm text-slate-800">${task}</p>
-                                    </div>`
-                        }).join('')}
-                    </div>`;
-        }
+            html += `</div>`;
 
-        function createDetailSection(title, content, iconSvg, isTimeline = false) {
-            if (!content || content.trim() === '' || content.trim() === '無') return '';
-            
-            // Process content for non-timeline sections to add line breaks for numbered lists
-            const processedContent = content.trim().replace(/\s+(?=\d+\.)/g, '<br><br>');
-            
-            // Use original content for timeline parsing, and processed content for others
-            let contentHtml = isTimeline 
-                ? createTimeline(content) 
-                : `<div class="prose prose-sm max-w-none text-slate-600">${marked.parse(processedContent)}</div>`;
+            // 進行中重點
+            html += `<div class="summary-section">`;
+            html += `<h4>二、重要進行中專案（建議會中關注）</h4>`;
+            if (ongoingTop.length === 0) {
+                html += `<div class="summary-item">目前沒有標記為「進行中」的重點專案。</div>`;
+            } else {
+                ongoingTop.forEach((p, i) => {
+                    html += `<div class="summary-item">`;
+                    html += `<div class="meta">#${i+1} • ${p.owner} (${p.group}) • ${p.status}</div>`;
+                    html += `<div class="font-bold">${p.title}</div>`;
+                    html += `<div class="mt-1 text-sm text-slate-700"><strong>關鍵挑戰：</strong> ${p.challenge}</div>`;
+                    html += `<div class="mt-1 text-sm text-slate-700"><strong>目前行動：</strong> ${p.action}</div>`;
+                    html += `</div>`;
+                });
+            }
+            html += `</div>`;
 
-            return `<div class="flex items-start gap-4"><div class="flex-shrink-0 text-slate-500 mt-1">${iconSvg}</div><div class="flex-grow"><p class="font-bold text-slate-800 text-base">${title}</p><div class="mt-2">${contentHtml}</div></div></div>`;
-        }
+            // 精簡清單（快速瀏覽）
+            html += `<div class="summary-section">`;
+            html += `<h4>三、所有報告一覽（精簡）</h4>`;
+            if (briefList.length === 0) {
+                html += `<div class="summary-item">無報告資料。</div>`;
+            } else {
+                // 以清單方式出現，方便快速掃描
+                html += `<div class="space-y-2">`;
+                briefList.slice(0, 40).forEach((b, i) => {
+                    html += `<div class="summary-item"><div class="meta">${b.owner} • ${b.group} • ${b.status}</div><div class="font-semibold text-sm">${b.title}</div><div class="text-xs text-slate-600 mt-1">${b.oneLine}</div></div>`;
+                });
+                if (briefList.length > 40) html += `<div class="text-sm text-slate-500">僅顯示前 40 筆，請使用篩選縮小範圍以檢視全部。</div>`;
+                html += `</div>`;
+            }
+            html += `</div>`;
 
-        function closeProjectDetailModal() {
-            document.getElementById('project-detail-modal').classList.add('hidden');
+            // 備註與建議
+            html += `<div class="summary-section"><h4>四、建議（快速）</h4><div class="summary-item"><ul class="list-disc pl-5 text-sm text-slate-700"><li>優先討論「待決策」項目，並指定明確決策時程與負責人。</li><li>針對進行中專案，確認關鍵時程與資源短缺（若有）</li><li>會後請秘書整理會議結論與 action item，並回填於系統以利追蹤。</li></ul></div></div>`;
+
+            return html;
         }
 
     </script>
