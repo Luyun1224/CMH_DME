@@ -78,9 +78,7 @@
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div class="flex items-center gap-4">
-                     <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                     </div>
+                     <img src="https://raw.githubusercontent.com/Luyun1224/CMH_DME/main/%E6%95%99%E5%AD%B8%E9%83%A8-LOGO.png" alt="教學部LOGO" class="w-14 h-14 object-contain">
                      <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-slate-800">教學部部務會議儀表板</h1>
                         <p id="header-subtitle" class="text-slate-500 mt-1">會議時間 2025/10/20(一)</p>
@@ -89,6 +87,10 @@
                 <div class="flex flex-col sm:flex-row items-stretch gap-2 w-full md:w-auto">
                     <select id="group-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
                     <select id="person-filter" class="filter-select w-full sm:w-48 bg-white border border-slate-300 text-slate-700 py-2 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500"></select>
+                    <button id="summary-btn" class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg>
+                        <span>會議摘要</span>
+                    </button>
                 </div>
             </div>
             <p id="last-updated" class="text-sm text-slate-400 mt-2 text-right"></p>
@@ -146,6 +148,23 @@
             <div id="project-modal-content" class="p-6 overflow-y-auto custom-scrollbar"></div>
         </div>
     </div>
+    
+    <!-- 會議摘要視窗 -->
+    <div id="summary-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden items-center justify-center p-4 z-[52]">
+        <div class="bg-slate-50 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b bg-white rounded-t-xl sticky top-0">
+                <h2 id="summary-modal-title" class="text-xl font-bold text-slate-800 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span>10/20 部務會議摘要</span>
+                </h2>
+                <button id="summary-modal-close" class="text-slate-400 hover:text-slate-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="summary-modal-content" class="p-6 md:p-8 overflow-y-auto custom-scrollbar"></div>
+        </div>
+    </div>
+
 
     <script>
         // --- 設定 ---
@@ -581,8 +600,13 @@
         function setupModalListeners() {
             document.getElementById('modal-close').addEventListener('click', closeMetricModal);
             document.getElementById('metric-modal').addEventListener('click', (e) => { if (e.target.id === 'metric-modal') closeMetricModal(); });
+            
             document.getElementById('project-modal-close').addEventListener('click', closeProjectDetailModal);
             document.getElementById('project-detail-modal').addEventListener('click', (e) => { if (e.target.id === 'project-detail-modal') closeProjectDetailModal(); });
+
+            document.getElementById('summary-btn').addEventListener('click', showSummaryModal);
+            document.getElementById('summary-modal-close').addEventListener('click', closeSummaryModal);
+            document.getElementById('summary-modal').addEventListener('click', (e) => { if (e.target.id === 'summary-modal') closeSummaryModal(); });
         }
 
         function showMetricModal(metricType) {
@@ -682,6 +706,95 @@
             document.getElementById('project-detail-modal').classList.add('hidden');
         }
 
+        function showSummaryModal() {
+            const modal = document.getElementById('summary-modal');
+            const modalContent = document.getElementById('summary-modal-content');
+            const reports = getFilteredReports();
+            const statusMap = {
+                1: { text: '規劃中', class: 'status-planned' }, 
+                2: { text: '進行中', class: 'status-ongoing' }, 
+                3: { text: '已完成', class: 'status-completed' }
+            };
+
+            // --- 亮點專案回饋 ---
+            const highlightProjects = reports.filter(r => r.details.needsDecision !== '是').slice(0, 10); // Limit for summary
+            let highlightsHtml = `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                        <span>策略成果回饋：亮點專案</span>
+                    </h3>`;
+            if (highlightProjects.length > 0) {
+                highlightsHtml += `<p class="text-sm text-slate-500 mb-4">本次將分享以下專案的進度與成果，以促進經驗交流與價值擴散：</p>
+                    <ul class="space-y-4">
+                        ${highlightProjects.map(p => {
+                            const statusInfo = statusMap[p.status] || { text: '未知', class: '' };
+                            const summaryText = p.details.objective || '暫無摘要說明';
+                            return `
+                            <li class="p-4 bg-slate-100 rounded-lg border border-slate-200">
+                                <div class="flex justify-between items-start gap-3">
+                                    <p class="font-semibold text-slate-800 flex-1">${p.details.theme}</p>
+                                    <div class="status-tag ${statusInfo.class} flex-shrink-0">${statusInfo.text}</div>
+                                </div>
+                                <p class="text-sm text-slate-600 mt-2 pl-2 border-l-2 border-slate-300">${summaryText}</p>
+                                <p class="text-xs text-slate-500 text-right mt-3 pt-2 border-t border-slate-200">${p.person} (${p.group})</p>
+                            </li>
+                        `}).join('')}
+                    </ul>`;
+            } else {
+                 highlightsHtml += `<p class="text-slate-500">目前沒有可供摘要的亮點專案。</p>`;
+            }
+             highlightsHtml += `</div>`;
+
+
+            // --- 待決策議題 ---
+            const decisionItems = reports.filter(r => r.details.needsDecision === '是');
+            let decisionsHtml = `
+                <div class="bg-white p-6 rounded-xl border-l-4 border-red-500 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>向上管理：需要部長決策的關鍵議題</span>
+                    </h3>`;
+            if (decisionItems.length > 0) {
+                decisionsHtml += `<ul class="space-y-4">
+                        ${decisionItems.map(item => `
+                            <li class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p class="font-bold text-red-900">${item.details.theme}</p>
+                                <p class="text-sm text-slate-600 mt-1">${item.details.objective}</p>
+                                <div class="mt-3 pt-3 border-t border-red-200">
+                                    <p class="text-sm font-semibold text-red-800">待決策問題：</p>
+                                    <p class="text-sm text-slate-700 mt-1">${item.details.decisionQuestion}</p>
+                                </div>
+                                <p class="text-right text-xs text-slate-500 mt-3">負責人：${item.person}</p>
+                            </li>
+                        `).join('')}
+                    </ul>`;
+            } else {
+                decisionsHtml += `<p class="text-slate-500">太棒了！目前沒有需要立即決策的議題。</p>`;
+            }
+            decisionsHtml += `</div>`;
+
+            // --- 奇美月進度說明 ---
+            let chimeiMonthHtml = `
+            <div class="bg-white p-6 rounded-xl border-l-4 border-pink-500 shadow-sm">
+                <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>奇美月進度說明討論</span>
+                </h3>
+            </div>`;
+
+            modalContent.innerHTML = `<div class="space-y-8">${highlightsHtml}${decisionsHtml}${chimeiMonthHtml}</div>`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summary-modal').classList.add('hidden');
+        }
+
     </script>
 
     <!-- 奇美月 大標題連結（已新增於最下方） -->
@@ -696,3 +809,6 @@
     </footer>
 </body>
 </html>
+
+
+
